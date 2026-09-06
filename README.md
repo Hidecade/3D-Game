@@ -1,5 +1,9 @@
 # AZURE RELIC — 蒼海の翼
 
+公開ゲーム: https://hidecade.github.io/3D-Game/
+
+`main`へのプッシュ後、GitHub Actionsでテストとビルドを行い、成功するとGitHub Pagesへ自動公開します。
+
 海上遺跡をドラゴンで飛行する、オリジナルの3Dレールシューティング。Panzer Dragoon Episode 1 の海と遺跡、飛翔感、ロックオン攻撃に着想を得ています。原作のアセット・音楽・キャラクターは使用していません。
 
 ## 起動

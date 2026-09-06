@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 
 // Use the same real /audio/SE paths in development and in the built game.
 export default {
+ base:'./',
  publicDir:false,
  plugins:[{
   name:'copy-sound-effects',
