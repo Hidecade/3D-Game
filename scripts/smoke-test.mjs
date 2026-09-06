@@ -68,7 +68,7 @@ mouseDown(2);events.get('blur')();press('Enter');mouseUp(2);assert.equal(g.locks
 g.reset();g.camera.updateMatrixWorld();const enemy=g.createEnemy(0,12,-35);mouseDown(2);g.updateGameplay(.26);assert.ok(g.locks.has(enemy),'keyboard-only centered aim acquires lock');mouseUp(2);assert.equal(g.locks.size,0);assert.ok(g.state.lasers>0,'lock release creates curved beams');assert.equal(enemy.hp,3,'lock laser does not damage before arrival');assert.equal(g.state.bullets,0,'lock attack creates no player projectiles');
 for(let i=0;i<90;i++)g.updateGameplay(1/60);assert.ok(enemy.dead,'homing laser destroys target');assert.ok(g.state.score>0);
 g.reset();g.setInvulnerable(1000);for(let i=0;i<2040;i++)g.updateGameplay(1/60);
-assert.ok(g.state.midBossSpawned,'midboss spawns at the middle of the course');assert.equal(currentTrack,'boss');
+assert.ok(g.state.midBossSpawned,'midboss spawns at the middle of the course');assert.equal(currentTrack,'stage');
 const mid=g.state.midBoss;assert.equal(mid.targets.length,16);assert.equal(mid.model.userData.segments.reduce((n,p)=>n+p.legs.length,0),32);
 const heldStage=g.state.stageTime,oldHead=mid.targets[0].mesh.position.clone();for(let i=0;i<120;i++)g.updateGameplay(1/60);
 assert.equal(g.state.stageTime,heldStage,'midboss battle holds stage progression');assert.ok(oldHead.distanceTo(mid.targets[0].mesh.position)>1,'segmented boss flies and undulates');assert.equal(g.state.bossSpawned,false);

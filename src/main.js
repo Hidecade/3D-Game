@@ -135,7 +135,6 @@ function renderRadar(){
  $('rear-warning').textContent=rear?`後方に ${rear} 体 / Q / E で旋回・迎撃`:'後方クリア';$('rear-warning').classList.toggle('danger',rear>0);
 }
 function spawnMidBoss(){
- music.start(true,'boss');
  const model=createCentipede();scene.add(model);
  midBoss={model,hp:180,maxHp:180,age:0,fire:3,dead:false,targets:[]};midBossSpawned=true;
  model.userData.segments.forEach(({mesh},index)=>{
@@ -153,7 +152,7 @@ function damageMidBoss(target,amount){
   enemy.dead=true;
   for(const part of enemy.targets){if(!part.dead)burst(part.mesh.position,'#ffc080',10);part.dead=true;locks.delete(part);part.marker?.remove();}
   score+=2500;kills++;updateScore();$('boss-bar').hidden=true;
-  announce('中ボス撃破 / 聖域への航路を再開',4);se.play('largeExplosion');music.start(true,'stage');waveTimer=3;
+  announce('中ボス撃破 / 聖域への航路を再開',4);se.play('largeExplosion');waveTimer=3;
  }else if(!target.head&&target.hp<=0){
   target.dead=true;locks.delete(target);target.marker?.remove();burst(target.mesh.position,'#ffc080',14);
   score+=150;updateScore();se.play('smallExplosion');
