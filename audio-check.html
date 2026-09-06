@@ -1,0 +1,21 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><title>SE 再生診断</title>
+<body style="background:#102c36;color:#ecffff;font:20px monospace;padding:30px">
+<h1>SE 再生診断</h1><button id="test" style="font-size:22px">レーザーの音をテスト</button><pre id="result"></pre>
+<script type="module">
+const result=document.querySelector('#result'),context=new AudioContext();
+const log=text=>result.textContent+=text+'\n';let sample;
+log('AudioContext: '+context.state);
+for(const extension of ['mp3','wav']){
+ try{
+  const response=await fetch('./audio/SE/ark_laser.'+extension);if(!response.ok)throw Error('HTTP '+response.status);
+  const bytes=await response.arrayBuffer();log(extension+': '+bytes.byteLength+' bytes');
+  const buffer=await context.decodeAudioData(bytes);sample=buffer;
+  log(extension+': DECODE OK / '+buffer.duration.toFixed(3)+' sec');
+ }catch(error){log(extension+': '+error.name+' / '+error.message);}
+}
+document.querySelector('#test').onclick=async()=>{
+ try{await context.resume();log('AudioContext: '+context.state);if(!sample)throw Error('No decoded sample');
+ const source=context.createBufferSource();source.buffer=sample;source.connect(context.destination);source.start();log('PLAY / output: '+context.destination.channelCount+' channels');
+ }catch(error){log(error.name+' / '+error.message);}
+};
+</script></body></html>

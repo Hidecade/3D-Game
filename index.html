@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#103e4b"><title>AZURE RELIC — 蒼海の翼</title><link rel="stylesheet" href="/src/style.css"></head>
+<body>
+<canvas id="world" aria-label="ドラゴンを操作して海上遺跡を飛ぶ3Dシューティング"></canvas>
+<div id="vignette"></div><div id="flash"></div>
+<div id="touch-controls" aria-label="タッチ操作">
+ <div id="touch-aim" aria-label="ドラッグで照準・自動連射"><span>照準・連射</span></div>
+ <div id="touch-stick" aria-label="移動スティック"><i id="touch-knob"></i><span>移動</span></div>
+ <button id="touch-lock" aria-label="長押しして狙い、離して追尾レーザー">LOCK</button>
+ <div class="touch-view"><button id="touch-left" aria-label="左へ90度">◀</button><button id="touch-front">前方</button><button id="touch-right" aria-label="右へ90度">▶</button></div>
+</div>
+<p class="touch-intro">横画面推奨 ／ 左スティックで移動・右側をドラッグで照準と連射<br>LOCKを押したまま狙い、離して追尾レーザー</p>
+<header><a class="brand" href="./"><span class="brand-mark">◇</span> AZURE RELIC <span class="brand-sub">蒼海の翼</span></a><div class="header-right"><span class="live-dot"></span> FLIGHT SYSTEM ONLINE <button id="sound" aria-label="サウンド切り替え">SOUND ON</button><button id="pause" aria-label="一時停止">Ⅱ</button></div></header>
+<main id="title" class="panel">
+<div class="eyebrow"><span></span> EPISODE 01 / THE SUNKEN SANCTUARY</div>
+<h1>AZURE<br><em>RELIC</em><small>蒼海の翼</small></h1>
+<p class="intro">海に沈んだ文明。空に残された、最後の翼。<br>竜とともに、忘れられた聖域へ。</p>
+<button id="start" class="primary">飛行を開始 <span>ENTER ↗</span></button>
+<div class="title-controls"><div><kbd>W A S D</kbd><span>移動 ／ マウスで照準</span></div><div><kbd>左クリック</kbd><span>通常レーザー・長押しで連射</span></div><div><kbd>右クリック</kbd><span>長押しでロック → 離して追尾レーザー</span></div></div>
+<p class="view-help">Q 左へ90度　E 右へ90度　R 前方へ戻る</p>
+</main>
+<aside id="location"><span>SECTOR 01</span><strong>水没した聖域</strong><small>THE SUNKEN SANCTUARY</small><div class="coordinates">24° 18′ N &nbsp; / &nbsp; 132° 06′ E</div></aside>
+<div id="hud" hidden>
+<div class="status"><div class="label">DRAGON INTEGRITY <span id="hp-label">100%</span></div><div class="health-track"><i id="health"></i></div><div class="lock-label">LOCK-ON <span id="locks">0 / 6</span></div><div id="lock-dots">◇ ◇ ◇ ◇ ◇ ◇</div></div>
+<div class="score"><div class="label">TOTAL SCORE</div><strong id="score">000000</strong><small id="combo">READY TO ENGAGE</small></div>
+<aside id="radar" aria-label="周囲の敵を示すレーダー">
+ <div class="label"><span>RADAR / 180m</span><span id="view-label">前方</span></div>
+ <div class="radar-face">
+  <svg viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="86"/><circle cx="100" cy="100" r="43"/><path d="M100 14V186 M14 100H186"/><g id="radar-cone"><path class="radar-view" d="M100 100 L50 30 A86 86 0 0 1 150 30 Z"/><path class="radar-heading" d="M100 90 L95 104 L100 101 L105 104 Z"/></g><text x="100" y="10">前</text><text x="100" y="198">後</text><text x="5" y="103">左</text><text x="195" y="103">右</text></svg>
+  <div id="radar-markers"></div>
+ </div>
+ <div id="rear-warning" role="status">後方クリア</div>
+ <div class="radar-legend">● 敵　◆ 大型　■ 艦艇<br><span>● ロック</span></div>
+</aside>
+<div class="progress"><div class="label"><span>01 — 水没した聖域</span><span id="distance">0%</span></div><div class="progress-track"><i id="progress"></i></div></div>
+<div id="boss-bar" hidden><div class="label" id="boss-name">ANCIENT DRAGON / 古竜アシュガル</div><div class="health-track"><i id="boss-health"></i></div></div>
+<div id="reticle"><i></i><span></span></div><div id="markers"></div><div id="announcement"></div>
+<div class="game-help">WASD 移動 ／ マウス 照準 ／ Q・E 90度旋回 ／ R 前方へ<br>左クリック 通常レーザー・長押し連射 ／ 右長押し → 離す 追尾レーザー ／ ESC 一時停止</div>
+</div>
+<section id="overlay" class="overlay" hidden><div class="eyebrow" id="result-label">FLIGHT PAUSED</div><h2 id="result-title">飛行を一時停止</h2><p id="result-copy">翼を休めて、再び空へ。</p><button id="resume" class="primary">飛行を再開 <span>ENTER ↗</span></button><button id="restart" class="secondary">最初からやり直す </button></section>
+<footer id="footer"><span>AN ORIGINAL RAIL SHOOTER</span><span>HEADPHONES RECOMMENDED <span class="tiny-diamond">◇</span> DESKTOP EXPERIENCE</span></footer>
+<script type="module" src="/src/main.js"></script>
+</body></html>

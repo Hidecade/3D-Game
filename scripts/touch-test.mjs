@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import { installTouchControls } from '../src/touch-controls.js';
+import { stepSteering } from '../src/flight.js';
+const elements=new Map(),windowEvents=new Map(),classes=new Set();
+function element(id){if(!elements.has(id))elements.set(id,{style:{},events:new Map(),setPointerCapture(){},getBoundingClientRect(){return {left:0,top:0,width:120,height:120};},addEventListener(name,fn){this.events.set(name,fn);}});return elements.get(id);}
+globalThis.document={getElementById:element,body:{classList:{add:name=>classes.add(name)}}};
+globalThis.window={matchMedia:()=>({matches:true}),addEventListener:(name,fn)=>windowEvents.set(name,fn)};
+globalThis.innerWidth=850;globalThis.innerHeight=400;
+const control={steerX:0,steerY:0,x:400,y:180};let shots=0,lasers=0,active=true,turns=[];
+const touch=installTouchControls({control,playing:()=>active,turn:code=>turns.push(code),fire:()=>shots++,lock:()=>{control.locking=true;},release:()=>{lasers++;control.locking=false;},cancel:()=>{control.shooting=control.locking=false;},unlock(){}});
+const event=(id,name,pointerId,x,y,pointerType='touch')=>element(id).events.get(name)({pointerId,clientX:x,clientY:y,pointerType,preventDefault(){},stopPropagation(){}});
+assert.ok(classes.has('touch-mode'),'coarse pointer enables touch UI');
+event('touch-stick','pointerdown',1,100,30);stepSteering(control,new Set(),.1);assert.ok(control.steerX>0&&control.steerY>0);
+event('touch-aim','pointerdown',2,600,200);assert.equal(shots,1);assert.equal(control.shooting,true);
+event('touch-aim','pointermove',2,620,180);assert.equal(control.x,430);assert.equal(control.y,150);assert.ok(control.touchX>0,'aim finger does not change movement finger');
+event('touch-lock','pointerdown',3,780,330);assert.equal(control.shooting,false);assert.equal(control.locking,true);
+event('touch-lock','pointermove',3,760,310);assert.equal(control.x,400);
+event('touch-lock','pointerup',3,760,310);assert.equal(lasers,1);assert.equal(control.shooting,true,'aim finger resumes normal fire');
+event('touch-aim','pointerup',2,620,180);assert.equal(control.shooting,false);assert.ok(control.touchX>0);
+event('touch-stick','pointerup',1,100,30);assert.equal(control.touchX,undefined);
+event('touch-lock','pointerdown',4,780,330);event('touch-lock','pointercancel',4,780,330);assert.equal(control.locking,false);assert.equal(lasers,1,'cancellation does not fire locks');
+event('touch-aim','pointerdown',5,600,200);active=false;touch.reset();event('touch-aim','pointermove',5,700,100);assert.equal(control.shooting,false);
+active=true;event('touch-left','click');event('touch-front','click');event('touch-right','click');assert.deepEqual(turns,['KeyQ','KeyR','KeyE']);
+event('touch-aim','pointerdown',6,600,200,'mouse');assert.equal(control.shooting,false);
+console.log('PASS: automatic touch UI, simultaneous movement/aim, lock drag/release, pointer cancellation, pause reset, view buttons and mouse isolation.');
