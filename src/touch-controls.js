@@ -1,23 +1,24 @@
 export function installTouchControls({control,playing,turn,fire,lock,release,cancel,unlock}){
  const ui=document.getElementById('touch-controls'),stick=document.getElementById('touch-stick'),knob=document.getElementById('touch-knob');
  const pointers=new Map();
- let lastRightTap=-Infinity,rightDownAt=null,rightActive=false;
- function clearRightGesture(){lastRightTap=-Infinity;rightDownAt=null;rightActive=false;}
- function rightGesture(x,y){
+ let lastTap=-Infinity,lastDirection=0,downAt=null,activeDirection=0;
+ function clearTurnGesture(){lastTap=-Infinity;lastDirection=0;downAt=null;activeDirection=0;}
+ function turnGesture(x,y){
   const now=Date.now();
-  if(!rightActive&&x>.65&&Math.abs(y)<.45){
-   rightActive=true;
-   if(now-lastRightTap<=320){lastRightTap=-Infinity;rightDownAt=null;turn('KeyE');}
-   else rightDownAt=now;
-  }else if(rightActive&&x<.3){
-   lastRightTap=rightDownAt!==null&&now-rightDownAt<=220&&Math.abs(y)<.45&&x>-.3?now:-Infinity;
-   rightActive=false;rightDownAt=null;
+  if(activeDirection&&x*activeDirection<.3){
+   lastTap=downAt!==null&&now-downAt<=220&&Math.abs(y)<.45&&Math.abs(x)<.3?now:-Infinity;
+   lastDirection=activeDirection;activeDirection=0;downAt=null;
+  }
+  if(!activeDirection&&Math.abs(x)>.65&&Math.abs(y)<.45){
+   activeDirection=Math.sign(x);
+   if(activeDirection===lastDirection&&now-lastTap<=320){lastTap=-Infinity;downAt=null;turn(activeDirection>0?'KeyE':'KeyQ');}
+   else{lastTap=-Infinity;downAt=now;}
   }
  }
- function reset(){clearRightGesture();pointers.clear();control.touchX=control.touchY=undefined;knob.style.transform='translate(-50%,-50%)';cancel();}
+ function reset(){clearTurnGesture();pointers.clear();control.touchX=control.touchY=undefined;knob.style.transform='translate(-50%,-50%)';cancel();}
  function endPointer(pointerId,aborted=false){
   const state=pointers.get(pointerId);if(!state)return;pointers.delete(pointerId);
-  if(state.kind==='stick'){if(aborted||!playing())clearRightGesture();else rightGesture(0,0);control.touchX=control.touchY=undefined;knob.style.transform='translate(-50%,-50%)';}
+  if(state.kind==='stick'){if(aborted||!playing())clearTurnGesture();else turnGesture(0,0);control.touchX=control.touchY=undefined;knob.style.transform='translate(-50%,-50%)';}
   else if(state.kind==='lock'){
    if(aborted||!playing())cancel();else{
     release();
@@ -36,7 +37,7 @@ export function installTouchControls({control,playing,turn,fire,lock,release,can
    let x=(e.clientX-r.left-r.width/2)/radius,y=(r.top+r.height/2-e.clientY)/radius;
    const length=Math.max(1,Math.hypot(x,y));x/=length;y/=length;
    control.touchX=x;control.touchY=y;knob.style.transform=`translate(calc(-50% + ${x*radius}px),calc(-50% + ${-y*radius}px))`;
-   rightGesture(x,y);
+   turnGesture(x,y);
   }else aim(e.clientX-state.x,e.clientY-state.y);
   state.x=e.clientX;state.y=e.clientY;
  }
