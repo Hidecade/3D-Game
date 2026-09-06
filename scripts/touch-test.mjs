@@ -22,4 +22,18 @@ event('touch-lock','pointerdown',4,780,330);event('touch-lock','pointercancel',4
 event('touch-aim','pointerdown',5,600,200);active=false;touch.reset();event('touch-aim','pointermove',5,700,100);assert.equal(control.shooting,false);
 active=true;event('touch-left','click');event('touch-front','click');event('touch-right','click');assert.deepEqual(turns,['KeyQ','KeyR','KeyE']);
 event('touch-aim','pointerdown',6,600,200,'mouse');assert.equal(control.shooting,false);
+// A second finger can turn without click synthesis or cancelling the stick.
+event('touch-stick','pointerdown',10,100,30);const heldX=control.touchX;
+event('touch-left','pointerdown',11,300,330);event('touch-front','pointerdown',12,350,330);event('touch-right','pointerdown',13,400,330);
+assert.deepEqual(turns.slice(-3),['KeyQ','KeyR','KeyE']);assert.equal(control.touchX,heldX);
+const turnCount=turns.length;event('touch-right','click',13,400,330);assert.equal(turns.length,turnCount,'synthetic click does not turn twice');
+event('touch-aim','pointerdown',14,600,200);event('touch-aim','lostpointercapture',14,600,200);
+assert.equal(control.touchX,heldX,'losing aim capture does not cancel movement');
+event('touch-lock','pointerdown',15,780,330);event('touch-lock','pointercancel',15,780,330);
+assert.equal(control.touchX,heldX,'cancelling a lock does not cancel movement');
+globalThis.innerHeight=350;windowEvents.get('resize')();assert.equal(control.touchX,heldX,'browser toolbar resize preserves active touch');
+event('touch-stick','pointermove',10,30,80);assert.ok(control.touchX<0,'stick keeps responding after other fingers cancel');
+event('touch-stick','pointerdown',16,90,30);event('touch-stick','pointerup',10,30,80);assert.ok(control.touchX>0,'new stick touch replaces a stale pointer');
+windowEvents.get('pointerup')({pointerId:16});assert.equal(control.touchX,undefined,'window release handles missed element release');
+event('touch-stick','pointerdown',17,100,30);globalThis.innerWidth=400;windowEvents.get('resize')();assert.equal(control.touchX,undefined,'rotation cancels old gesture');
 console.log('PASS: automatic touch UI, simultaneous movement/aim, lock drag/release, pointer cancellation, pause reset, view buttons and mouse isolation.');

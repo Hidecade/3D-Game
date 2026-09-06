@@ -2,6 +2,14 @@ export function installTouchControls({control,playing,turn,fire,lock,release,can
  const ui=document.getElementById('touch-controls'),stick=document.getElementById('touch-stick'),knob=document.getElementById('touch-knob');
  const pointers=new Map();
  function reset(){pointers.clear();control.touchX=control.touchY=undefined;knob.style.transform='translate(-50%,-50%)';cancel();}
+ function endPointer(pointerId,aborted=false){
+  const state=pointers.get(pointerId);if(!state)return;pointers.delete(pointerId);
+  if(state.kind==='stick'){control.touchX=control.touchY=undefined;knob.style.transform='translate(-50%,-50%)';}
+  else if(state.kind==='lock'){
+   if(aborted||!playing())cancel();else release();
+   control.shooting=playing()&&[...pointers.values()].some(p=>p.kind==='aim');
+  }else control.shooting=false;
+ }
  function show(){document.body.classList.add('touch-mode');}
  if(window.matchMedia?.('(pointer: coarse)').matches)show();
  window.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')show();});
@@ -18,23 +26,35 @@ export function installTouchControls({control,playing,turn,fire,lock,release,can
  for(const [id,kind] of [['touch-stick','stick'],['touch-aim','aim'],['touch-lock','lock']]){
   const element=document.getElementById(id);
   element.addEventListener('pointerdown',e=>{
-   if(e.pointerType!=='touch'||!playing()||[...pointers.values()].some(p=>p.kind===kind))return;
-   e.preventDefault();e.stopPropagation();show();unlock();element.setPointerCapture(e.pointerId);
+   if(e.pointerType!=='touch'||!playing())return;
+   // A fresh touch can reclaim a control after a browser lost an end event.
+   for(const [id,state] of pointers)if(state.kind===kind)endPointer(id,true);
+   e.preventDefault();e.stopPropagation();show();unlock();
    const state={kind,x:e.clientX,y:e.clientY};pointers.set(e.pointerId,state);
+   try{element.setPointerCapture(e.pointerId);}catch{/* Window end handlers still release this touch. */}
    if(kind==='stick')move(e,state);
    else if(kind==='lock'){control.shooting=false;lock();}
    else if(!control.locking){control.shooting=true;fire();}
   });
   element.addEventListener('pointermove',e=>{const state=pointers.get(e.pointerId);if(state&&playing()){e.preventDefault();move(e,state);}});
   element.addEventListener('pointerup',e=>{
-   const state=pointers.get(e.pointerId);if(!state)return;e.preventDefault();pointers.delete(e.pointerId);
-   if(state.kind==='stick'){control.touchX=control.touchY=undefined;knob.style.transform='translate(-50%,-50%)';}
-   else if(state.kind==='lock'){if(playing())release();control.shooting=playing()&&[...pointers.values()].some(p=>p.kind==='aim');}
-   else control.shooting=false;
+   if(!pointers.has(e.pointerId))return;e.preventDefault();endPointer(e.pointerId);
   });
-  for(const event of ['pointercancel','lostpointercapture'])element.addEventListener(event,e=>{if(pointers.has(e.pointerId))reset();});
+  for(const event of ['pointercancel','lostpointercapture'])element.addEventListener(event,e=>endPointer(e.pointerId,true));
  }
- for(const [id,code] of [['touch-left','KeyQ'],['touch-right','KeyE'],['touch-front','KeyR']])document.getElementById(id).addEventListener('click',()=>{if(playing())turn(code);});
- window.addEventListener('resize',reset);
+ for(const [id,code] of [['touch-left','KeyQ'],['touch-right','KeyE'],['touch-front','KeyR']]){
+  const button=document.getElementById(id);let lastTouch=-Infinity;
+  // Secondary fingers do not reliably generate click on iOS. Act on touch down.
+  button.addEventListener('pointerdown',e=>{
+   if(e.pointerType!=='touch'||!playing())return;
+   e.preventDefault();e.stopPropagation();lastTouch=Date.now();turn(code);
+  });
+  button.addEventListener('click',e=>{if(e.pointerType!=='touch'&&Date.now()-lastTouch>700&&playing())turn(code);});
+ }
+ window.addEventListener('pointerup',e=>endPointer(e.pointerId));
+ window.addEventListener('pointercancel',e=>endPointer(e.pointerId,true));
+ // Safari's address bar changes viewport height without ending the gesture.
+ let width=innerWidth;
+ window.addEventListener('resize',()=>{if(innerWidth!==width){width=innerWidth;reset();}});
  return {reset};
 }
