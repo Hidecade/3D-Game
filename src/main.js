@@ -245,6 +245,7 @@ function releaseLocks(){
 function clearLocks(){for(const e of locks){e.marker?.remove();e.marker=null;}locks.clear();control.locking=false;$('reticle').classList.remove('locking');}
 function hurt(){if(invulnerable>0||mode!=='playing')return;health=Math.max(0,health-10);invulnerable=1.5;$('health').style.width=`${health}%`;$('hp-label').textContent=`${health}%`;$('flash').style.opacity=.35;se.play('damage');combo=0;if(!health)finish(false);}
 function reset(){
+ document.body.classList.remove('ending');victoryTime=0;dragon.visible=true;
  touch.reset();
  music.start(true,'stage');
  delete dragon.userData.rig.wingMotion;
@@ -260,7 +261,26 @@ function reset(){
  $('health').style.width='100%';$('hp-label').textContent='100%';$('score').textContent='000000';$('combo').textContent='READY TO ENGAGE';$('boss-bar').hidden=true;$('boss-health').style.width='100%';$('overlay').hidden=true;$('title').hidden=true;$('location').hidden=true;$('footer').hidden=true;$('hud').hidden=false;document.body.classList.add('playing');mode='playing';announce('EPISODE 01  /  水没した聖域',5);
 }
 function pause(){if(mode==='playing'){touch.reset();music.pause();se.setSuspended(true);mode='paused';control.shooting=false;clearLocks();keys.clear();$('overlay').hidden=false;$('result-label').textContent='FLIGHT PAUSED';$('result-title').textContent='飛行を一時停止';$('result-copy').textContent='翼を休めて、再び空へ。';$('resume').hidden=false;}else if(mode==='paused'){music.start();se.setSuspended(false);void se.unlock();mode='playing';$('overlay').hidden=true;}}
-function finish(win){touch.reset();music.pause();invulnerable=0;$('flash').style.opacity=0;if(win){$('progress').style.width='100%';$('distance').textContent='100%';}mode=win?'win':'lose';control.shooting=false;clearLocks();$('overlay').hidden=false;$('result-label').textContent=win?'EPISODE COMPLETE':'FLIGHT LOST';$('result-title').textContent=win?'聖域に、静寂を。':'翼は、まだ折れていない。';$('result-copy').textContent=`${win?'守護者を撃破。蒼い空は、再びあなたのものに。':'もう一度、竜とともに聖域へ。'}\nSCORE  ${String(score).padStart(6,'0')}   /   撃破 ${kills}   /   ${Math.floor(elapsed)} 秒`;$('resume').hidden=true;document.body.classList.remove('playing');}
+function finish(win){if(win&&mode!=='victory'){beginVictory();return;}touch.reset();music.pause();invulnerable=0;$('flash').style.opacity=0;if(win){$('progress').style.width='100%';$('distance').textContent='100%';}mode=win?'win':'lose';control.shooting=false;clearLocks();$('overlay').hidden=false;$('result-label').textContent=win?'EPISODE COMPLETE':'FLIGHT LOST';$('result-title').textContent=win?'聖域に、静寂を。':'翼は、まだ折れていない。';$('result-copy').textContent=`${win?'守護者を撃破。蒼い空は、再びあなたのものに。':'もう一度、竜とともに聖域へ。'}\nSCORE  ${String(score).padStart(6,'0')}   /   撃破 ${kills}   /   ${Math.floor(elapsed)} 秒`;$('resume').hidden=true;document.body.classList.remove('playing');}
+let victoryTime=0;
+function beginVictory(){
+ mode='victory';victoryTime=0;touch.reset();keys.clear();control.shooting=false;clearLocks();invulnerable=0;dragon.visible=true;
+ $('flash').style.opacity=0;$('overlay').hidden=true;$('hud').hidden=true;
+ document.body.classList.remove('playing');document.body.classList.add('ending');
+ for(const bullet of bullets)disposeGroup(bullet.mesh);bullets.length=0;
+ camera.position.copy(dragon.position).add(V(0,5,21));camera.lookAt(dragon.position.clone().add(V(0,3,-50)));camera.updateMatrixWorld();
+}
+function updateVictory(dt){
+ if(document.hidden)return;
+ victoryTime+=dt;t+=dt;seaMaterial.uniforms.time.value=t;
+ const velocity=V(4+victoryTime*9,2+victoryTime*12,-8-victoryTime*9);
+ dragon.position.addScaledVector(velocity,dt);
+ const destination=dragon.position.clone().add(velocity.clone().multiplyScalar(5));
+ turnTowardAim(dragon,camera,destination,dt);
+ animateDragon(dragon,t,{bank:dragon.userData.aimBank,motion:V(.45,.9,0),aimTarget:destination,dt});
+ animateRider(rider,destination,dt);updateHomingLasers(dt);
+ if(victoryTime>=4){dragon.visible=false;finish(true);}
+}
 $('start').onclick=()=>{reset();if(soundOn)tone(330,.7);};$('restart').onclick=reset;$('resume').onclick=pause;$('pause').onclick=pause;
 $('sound').onclick=()=>{soundOn=!soundOn;music.setEnabled(soundOn);se.setEnabled(soundOn);if(soundOn)void se.unlock();$('sound').textContent=soundOn?'SOUND ON':'SOUND OFF';if(soundOn)tone(440,.2);};
 function handleKeyDown(e){
@@ -390,6 +410,7 @@ function updateGameplay(dt){
 }
 let previous=performance.now();
 function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous)/1000,.04);previous=now;
+ if(mode==='victory')updateVictory(dt);
  if(mode==='title'||mode==='playing'){
   t+=dt;seaMaterial.uniforms.time.value=t;
   const speed=mode==='title'?4:23;travel+=dt*speed;seaMaterial.uniforms.travel.value=travel;
