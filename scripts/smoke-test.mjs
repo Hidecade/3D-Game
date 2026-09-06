@@ -3,6 +3,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import * as Three from 'three';
 import { createDragon, animateDragon, dragonMouth } from '../src/dragons.js';
+import { createSkyBeast } from '../src/sky-beasts.js';
 import { createOcean } from '../src/ocean.js';
 import { courseAt, stepSteering, aimPixels, reticleWorldPoint, turnTowardAim, VIEW_DIRECTIONS, updateView, radarContact } from '../src/flight.js';
 import { createCentipede, animateCentipede } from '../src/centipede.js';
@@ -21,7 +22,7 @@ const installUpdatePrompt=()=>{};
 const soundEvents=[];let soundEnabled=false,soundUnlocks=0;
 const createSoundEffects=()=>({play(name){soundEvents.push(name);},setEnabled(value){soundEnabled=value;},setSuspended(){},stopAll(){},async unlock(){soundUnlocks++;}});
 const events=new Map();
-const context=vm.createContext({createDragon,animateDragon,dragonMouth,createOcean,courseAt,stepSteering,aimPixels,reticleWorldPoint,turnTowardAim,VIEW_DIRECTIONS,updateView,radarContact,createCentipede,animateCentipede,createLaser,updateLaser,disposeLaser,createWarship,updateWarship,warshipMuzzle,seaHeight,createRider,animateRider,riderMuzzle,resetRider,createSoundEffects,createMusic,installTouchControls,installUpdatePrompt,THREE:{...Three,WebGLRenderer:Renderer},document:{getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);},createElement:element,body:element(),addEventListener(){}},window:{addEventListener(name,fn){events.set(name,fn);}},innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>0},requestAnimationFrame(){},console});
+const context=vm.createContext({createSkyBeast,createDragon,animateDragon,dragonMouth,createOcean,courseAt,stepSteering,aimPixels,reticleWorldPoint,turnTowardAim,VIEW_DIRECTIONS,updateView,radarContact,createCentipede,animateCentipede,createLaser,updateLaser,disposeLaser,createWarship,updateWarship,warshipMuzzle,seaHeight,createRider,animateRider,riderMuzzle,resetRider,createSoundEffects,createMusic,installTouchControls,installUpdatePrompt,THREE:{...Three,WebGLRenderer:Renderer},document:{getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);},createElement:element,body:element(),addEventListener(){}},window:{addEventListener(name,fn){events.set(name,fn);}},innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>0},requestAnimationFrame(){},console});
 const source=fs.readFileSync(new URL('../src/main.js',import.meta.url),'utf8').replace(/^import .*;$/gm,'');
 vm.runInContext(source+`;globalThis.test={reset,pause,frame,createEnemy,spawnWarship,damageEnemy,shoot,releaseLocks,hurt,keys,control,player,screenPos,dragon,rider,locks,enemies,camera,updateGameplay,get state(){return {effects,view,radarDots,mode,elapsed,stageTime,midBoss,midBossSpawned,health,score,kills,bossSpawned,boss,bullets:bullets.length,projectiles:bullets,laserFlights:lasers,lasers:lasers.length,travel}},setInvulnerable(n){invulnerable=n}}`,context);
 const g=context.test;assert.equal(soundEnabled,true,'sound is enabled by default');
@@ -210,6 +211,8 @@ for(const name of ['laser','homing','damage','smallExplosion','mediumExplosion',
 // Actual wings and body detach without changing their world position.
 g.reset();
 const shattered=g.createEnemy(8,15,-40),wing=shattered.creature.userData.rig.wings[0].shoulder;
+assert.equal(shattered.creature.name,'eagle-sky-beast','regular enemies use the eagle beast');
+assert.equal(shattered.creature.userData.rig.tail.length,1,'a short feather fan replaces the segmented dragon tail');
 wing.updateWorldMatrix(true,true);const wingPosition=wing.getWorldPosition(new Three.Vector3());
 g.damageEnemy(shattered,3);
 let debris=g.state.effects.filter(e=>e.debris);

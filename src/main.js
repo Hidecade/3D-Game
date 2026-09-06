@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createDragon, animateDragon, dragonMouth } from './dragons.js';
+import { createSkyBeast } from './sky-beasts.js';
 import { createOcean } from './ocean.js';
 import { courseAt, stepSteering, aimPixels, reticleWorldPoint, turnTowardAim, VIEW_DIRECTIONS, updateView, radarContact } from './flight.js';
 import { createCentipede, animateCentipede } from './centipede.js';
@@ -97,7 +98,7 @@ function screenPos(pos){const p=pos.clone().project(camera);return {x:(p.x*.5+.5
 function disposeGroup(g){g.traverse(o=>{if(o.geometry)o.geometry.dispose();});g.removeFromParent();}
 function createEnemy(x,y,z,isBoss=false,approach='front'){
  const g=new THREE.Group();g.position.set(x,y,z);scene.add(g);
- const creature=createDragon({kind:isBoss?'ancient':(rand()>.5?'ember':'moss'),ancient:isBoss});
+ const creature=isBoss?createDragon({kind:'ancient',ancient:true}):createSkyBeast({kind:rand()>.5?'amber':'storm'});
  creature.rotation.y=approach==='front'?Math.PI:0;creature.scale.setScalar(isBoss?2.65:.73);g.add(creature);
  const e={mesh:g,creature,hp:isBoss?220:3,maxHp:isBoss?220:3,boss:isBoss,approach,age:0,baseX:x,baseY:y,baseZ:z,sideOffset:x-courseAt(elapsed).x,fire:2+rand()*2,phase:rand()*6,dead:false,marker:null};enemies.push(e);return e;
 }
