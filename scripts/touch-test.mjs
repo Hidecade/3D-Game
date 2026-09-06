@@ -16,6 +16,7 @@ event('touch-aim','pointermove',2,620,180);assert.equal(control.x,430);assert.eq
 event('touch-lock','pointerdown',3,780,330);assert.equal(control.shooting,false);assert.equal(control.locking,true);
 event('touch-lock','pointermove',3,760,310);assert.equal(control.x,400);
 event('touch-lock','pointerup',3,760,310);assert.equal(lasers,1);assert.equal(control.shooting,true,'aim finger resumes normal fire');
+assert.equal(control.x,innerWidth*.5,'LOCK release centers horizontal aim');assert.equal(control.y,innerHeight*.48,'LOCK release centers vertical aim');assert.ok(control.touchX>0,'centering aim preserves movement');
 event('touch-aim','pointerup',2,620,180);assert.equal(control.shooting,false);assert.ok(control.touchX>0);
 event('touch-stick','pointerup',1,100,30);assert.equal(control.touchX,undefined);
 event('touch-lock','pointerdown',4,780,330);event('touch-lock','pointercancel',4,780,330);assert.equal(control.locking,false);assert.equal(lasers,1,'cancellation does not fire locks');

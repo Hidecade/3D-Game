@@ -6,7 +6,10 @@ export function installTouchControls({control,playing,turn,fire,lock,release,can
   const state=pointers.get(pointerId);if(!state)return;pointers.delete(pointerId);
   if(state.kind==='stick'){control.touchX=control.touchY=undefined;knob.style.transform='translate(-50%,-50%)';}
   else if(state.kind==='lock'){
-   if(aborted||!playing())cancel();else release();
+   if(aborted||!playing())cancel();else{
+    release();
+    control.x=innerWidth*.5;control.y=innerHeight*.48;
+   }
    control.shooting=playing()&&[...pointers.values()].some(p=>p.kind==='aim');
   }else control.shooting=false;
  }
