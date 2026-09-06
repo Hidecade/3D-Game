@@ -4,7 +4,7 @@ import { createOcean } from './ocean.js';
 import { courseAt, stepSteering, aimPixels, reticleWorldPoint, turnTowardAim, VIEW_DIRECTIONS, updateView, radarContact } from './flight.js';
 import { createCentipede, animateCentipede } from './centipede.js';
 import { createLaser, updateLaser, disposeLaser } from './lasers.js';
-import { createWarship, updateWarship, warshipMuzzle } from './warships.js';
+import { createWarship, updateWarship, warshipMuzzle, seaHeight } from './warships.js';
 import { createRider, animateRider, riderMuzzle, resetRider } from './rider.js';
 import { createSoundEffects } from './sound-effects.js';
 import { createMusic } from './music.js';
@@ -177,7 +177,7 @@ function updateScore(){ $('score').textContent=String(score).padStart(6,'0');$('
 function burst(pos,color='#ffd19b',count=18){
  for(let i=0;i<count;i++){const m=mesh(new THREE.IcosahedronGeometry(.12+rand()*.25,0),mat(color,{emissive:color,emissiveIntensity:1.6}),pos.x,pos.y,pos.z);effects.push({mesh:m,velocity:V((rand()-.5)*20,(rand()-.5)*20,(rand()-.5)*20),life:.5+rand()*.5,max:1});}
 }
-function damageEnemy(e,amount){if(e.dead)return;if(e.midBoss){damageMidBoss(e,amount);return;}e.hp-=amount;burst(e.mesh.position,'#a9edee',3);if(e.boss)$('boss-health').style.width=`${Math.max(0,e.hp/e.maxHp)*100}%`;if(e.hp<=0){e.dead=true;locks.delete(e);e.marker?.remove();burst(e.mesh.position,e.boss?'#ffe2ad':'#ffc080',e.boss?65:20);se.play(e.boss?'largeExplosion':e.warship?'mediumExplosion':'smallExplosion');combo=elapsed-lastKill<3?combo+1:1;lastKill=elapsed;kills++;score+=(e.boss?5000:e.warship?600:100)*Math.min(combo,8);updateScore();if(e.boss)finish(true);}}
+function damageEnemy(e,amount){if(e.dead)return;if(e.midBoss){damageMidBoss(e,amount);return;}e.hp-=amount;burst(e.mesh.position,'#a9edee',3);if(e.boss)$('boss-health').style.width=`${Math.max(0,e.hp/e.maxHp)*100}%`;if(e.hp<=0){e.dead=true;locks.delete(e);e.marker?.remove();if(!e.boss){burst(e.mesh.position,'#ffc080',20);se.play(e.warship?'mediumExplosion':'smallExplosion');}combo=elapsed-lastKill<3?combo+1:1;lastKill=elapsed;kills++;score+=(e.boss?5000:e.warship?600:100)*Math.min(combo,8);updateScore();if(e.boss)beginBossCrash(e);}}
 function launchBolt(origin,target,color,enemy=false,homing=null,damage=1){
  const m=mesh(new THREE.SphereGeometry(enemy?.32:.14,10,8),mat(color,{emissive:color,emissiveIntensity:3}),origin.x,origin.y,origin.z);
  if(enemy){
@@ -245,7 +245,7 @@ function releaseLocks(){
 function clearLocks(){for(const e of locks){e.marker?.remove();e.marker=null;}locks.clear();control.locking=false;$('reticle').classList.remove('locking');}
 function hurt(){if(invulnerable>0||mode!=='playing')return;health=Math.max(0,health-10);invulnerable=1.5;$('health').style.width=`${health}%`;$('hp-label').textContent=`${health}%`;$('flash').style.opacity=.35;se.play('damage');combo=0;if(!health)finish(false);}
 function reset(){
- document.body.classList.remove('ending');victoryTime=0;dragon.visible=true;
+ document.body.classList.remove('ending');victoryTime=0;bossCrash=null;dragon.visible=true;
  touch.reset();
  music.start(true,'stage');
  delete dragon.userData.rig.wingMotion;
@@ -262,7 +262,42 @@ function reset(){
 }
 function pause(){if(mode==='playing'){touch.reset();music.pause();se.setSuspended(true);mode='paused';control.shooting=false;clearLocks();keys.clear();$('overlay').hidden=false;$('result-label').textContent='FLIGHT PAUSED';$('result-title').textContent='飛行を一時停止';$('result-copy').textContent='翼を休めて、再び空へ。';$('resume').hidden=false;}else if(mode==='paused'){music.start();se.setSuspended(false);void se.unlock();mode='playing';$('overlay').hidden=true;}}
 function finish(win){if(win&&mode!=='victory'){beginVictory();return;}touch.reset();music.pause();invulnerable=0;$('flash').style.opacity=0;if(win){$('progress').style.width='100%';$('distance').textContent='100%';}mode=win?'win':'lose';control.shooting=false;clearLocks();$('overlay').hidden=false;$('result-label').textContent=win?'EPISODE COMPLETE':'FLIGHT LOST';$('result-title').textContent=win?'聖域に、静寂を。':'翼は、まだ折れていない。';$('result-copy').textContent=`${win?'守護者を撃破。蒼い空は、再びあなたのものに。':'もう一度、竜とともに聖域へ。'}\nSCORE  ${String(score).padStart(6,'0')}   /   撃破 ${kills}   /   ${Math.floor(elapsed)} 秒`;$('resume').hidden=true;document.body.classList.remove('playing');}
-let victoryTime=0;
+let victoryTime=0,bossCrash=null;
+function beginBossCrash(enemy){
+ beginVictory();mode='boss-crash';
+ bossCrash={enemy,age:0,impactAge:0,impacted:false};
+ camera.position.copy(enemy.mesh.position).add(V(30,14,45));
+ camera.lookAt(enemy.mesh.position);camera.updateMatrixWorld();
+}
+function updateBossCrash(dt){
+ if(document.hidden)return;
+ t+=dt;seaMaterial.uniforms.time.value=t;
+ const crash=bossCrash,body=crash.enemy.mesh;
+ crash.age+=dt;
+ animateDragon(dragon,t);
+ updateHomingLasers(dt);
+ if(!crash.impacted){
+  body.position.y-=(2+crash.age*9)*dt;
+  body.position.z+=dt*3;
+  body.rotation.x-=dt*.35;body.rotation.z+=dt*.65;
+  camera.lookAt(body.position);camera.updateMatrixWorld();
+  const surface=seaHeight(body.position.x,body.position.z,t,travel);
+  if(body.position.y<=surface+1){
+   body.position.y=surface;crash.impacted=true;
+   burst(body.position,'#ffe2ad',85);se.play('largeExplosion');
+   for(let i=0;i<55;i++){
+    const angle=rand()*Math.PI*2,speed=8+rand()*16;
+    const drop=mesh(new THREE.SphereGeometry(.25+rand()*.45,6,4),mat('#c3f5ff',{transparent:true,opacity:.8}),body.position.x,surface,body.position.z);
+    effects.push({mesh:drop,velocity:V(Math.cos(angle)*speed,8+rand()*17,Math.sin(angle)*speed),life:2,max:2});
+   }
+   disposeGroup(body);
+   const index=enemies.indexOf(crash.enemy);if(index>=0)enemies.splice(index,1);
+  }
+ }else{
+  crash.impactAge+=dt;
+  if(crash.impactAge>=1.8){bossCrash=null;beginVictory();}
+ }
+}
 function beginVictory(){
  mode='victory';victoryTime=0;touch.reset();keys.clear();control.shooting=false;clearLocks();invulnerable=0;dragon.visible=true;
  $('flash').style.opacity=0;$('overlay').hidden=true;$('hud').hidden=true;
@@ -405,12 +440,13 @@ function updateGameplay(dt){
   }
   if(b.life<=0){disposeGroup(b.mesh);bullets.splice(i,1);}
  }
- for(let i=enemies.length-1;i>=0;i--)if(enemies[i].dead){disposeGroup(enemies[i].mesh);enemies.splice(i,1);}
+ for(let i=enemies.length-1;i>=0;i--)if(enemies[i].dead&&enemies[i]!==bossCrash?.enemy){disposeGroup(enemies[i].mesh);enemies.splice(i,1);}
  renderRadar();
 }
 let previous=performance.now();
 function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous)/1000,.04);previous=now;
- if(mode==='victory')updateVictory(dt);
+ if(mode==='boss-crash')updateBossCrash(dt);
+ else if(mode==='victory')updateVictory(dt);
  if(mode==='title'||mode==='playing'){
   t+=dt;seaMaterial.uniforms.time.value=t;
   const speed=mode==='title'?4:23;travel+=dt*speed;seaMaterial.uniforms.travel.value=travel;
