@@ -78,7 +78,8 @@ export function createSkyBeast({kind='amber'}={}){
  const wings=[];
  for(const s of [-1,1]){
   const shoulder=new THREE.Group();shoulder.position.set(s*.46,.25,-.34);shoulder.scale.set(1.32,1,1.16);root.add(shoulder);
-  oval(shoulder,dark,s*1.1,0,.12,1.4,.22,.7);
+  // Feathered wing roots, with no exposed arm or hand-like bulges.
+  for(let i=0;i<4;i++)feather(shoulder,dark,[s*i*.4,0,-.35],[s*(.75+i*.4),0,.85],.36);
   for(let i=0;i<7;i++)feather(shoulder,i%2?cover:dark,[s*(.15+i*.3),.1,0],[s*(.65+i*.32),-.04,1.5+i*.08],.27);
   const outer=new THREE.Group();outer.position.set(s*2.35,0,.08);shoulder.add(outer);
   for(let i=0;i<9;i++){
@@ -86,9 +87,10 @@ export function createSkyBeast({kind='amber'}={}){
    feather(outer,tips,[s*(1.6-i*.065),-.02,-.35+i*.32],[s*(2.65-i*.12),-.04,-.65+i*.42],.15);
   }
   bake(outer);bake(shoulder);wings.push({shoulder,outer,side:s});
-  oval(root,cover,s*.58,-.67,.65,.35,.5,.45);
-  oval(root,gold,s*.61,-1.12,.45,.12,.32,.13);
-  for(let i=0;i<3;i++)claw(root,tips,V(s*.61+(i-1)*.14,-1.3,.43),V(s*.61+(i-1)*.23,-1.65,-.12),.09);
+  // Two small bird feet tucked back under the belly in flight.
+  oval(root,cover,s*.42,-.61,.7,.19,.22,.28);
+  oval(root,gold,s*.43,-.78,.83,.065,.14,.08);
+  for(let i=0;i<3;i++)claw(root,tips,V(s*.43+(i-1)*.065,-.88,.84),V(s*.43+(i-1)*.095,-1.01,1.06),.042);
  }
  const fan=new THREE.Group();fan.position.set(0,.05,1.4);root.add(fan);
  for(let i=-3;i<=3;i++)feather(fan,i%2?cover:ivory,[i*.1,0,0],[i*.4,-.15,2.2-Math.abs(i)*.15],.25);
