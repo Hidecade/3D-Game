@@ -181,10 +181,12 @@ function burst(pos,color='#ffd19b',count=18){
 }
 function damageEnemy(e,amount){if(e.dead)return;if(e.midBoss){damageMidBoss(e,amount);return;}e.hp-=amount;burst(e.mesh.position,'#a9edee',3);if(e.boss)$('boss-health').style.width=`${Math.max(0,e.hp/e.maxHp)*100}%`;if(e.hp<=0){e.dead=true;locks.delete(e);e.marker?.remove();if(!e.boss){breakEnemy(e);burst(e.mesh.position,'#ffc080',20);se.play(e.warship?'mediumExplosion':'smallExplosion');}combo=elapsed-lastKill<3?combo+1:1;lastKill=elapsed;kills++;score+=(e.boss?5000:e.warship?600:100)*Math.min(combo,8);updateScore();if(e.boss)beginBossCrash(e);}}
 function launchBolt(origin,target,color,enemy=false,homing=null,damage=1){
- const m=mesh(new THREE.SphereGeometry(enemy?.32:.14,10,8),mat(color,{emissive:color,emissiveIntensity:3}),origin.x,origin.y,origin.z);
+ const boltColor=enemy?'#ff2415':color;
+ const m=mesh(new THREE.SphereGeometry(enemy?.43:.14,10,8),mat(boltColor,{emissive:boltColor,emissiveIntensity:enemy?1.6:3}),origin.x,origin.y,origin.z);
  if(enemy){
-  mesh(new THREE.SphereGeometry(.5,10,8),mat('#ff692a',{emissive:'#f65a17',emissiveIntensity:2,transparent:true,opacity:.28,depthWrite:false}),0,0,0,m);
-  const flame=mesh(new THREE.ConeGeometry(.29,1.7,9),mat('#ffb24b',{emissive:'#ff7a27',emissiveIntensity:2,transparent:true,opacity:.65,depthWrite:false}),0,0,-.85,m);flame.rotation.x=-Math.PI/2;
+  mesh(new THREE.SphereGeometry(.66,10,8),mat('#e8170b',{emissive:'#e8170b',emissiveIntensity:1.2,transparent:true,opacity:.35,depthWrite:false}),0,0,0,m);
+  const flame=mesh(new THREE.ConeGeometry(.4,2.25,9),mat('#e51b0b',{emissive:'#ff1808',emissiveIntensity:1.4,transparent:true,opacity:.8,depthWrite:false}),0,0,-1.05,m);flame.rotation.x=-Math.PI/2;
+  m.userData.flame=flame;
   m.lookAt(target);
  }else {m.scale.setScalar(1.8);m.lookAt(target);}
  const vel=target.clone().sub(origin).normalize().multiplyScalar(enemy?26:180);bullets.push({mesh:m,velocity:vel,enemy,homing,damage,life:enemy?9:2.2});
@@ -463,7 +465,7 @@ function updateGameplay(dt){
  $('locks').textContent=`${locks.size} / 6`;$('lock-dots').textContent=Array.from({length:6},(_,i)=>i<locks.size?'◆':'◇').join(' ');
  updateHomingLasers(dt);
  for(let i=bullets.length-1;i>=0;i--){const b=bullets[i];b.life-=dt;const prev=b.mesh.position.clone();if(b.homing&&!b.homing.dead){b.velocity.copy(b.homing.mesh.position).sub(b.mesh.position).normalize().multiplyScalar(180);b.mesh.lookAt(b.homing.mesh.position);}b.mesh.position.addScaledVector(b.velocity,dt);
-  if(b.enemy){const segment=new THREE.Line3(prev,b.mesh.position);const closest=segment.closestPointToPoint(dragon.position,true,new THREE.Vector3());if(closest.distanceTo(dragon.position)<1.5){hurt();b.life=0;}}
+  if(b.enemy){const flame=b.mesh.userData.flame;if(flame){flame.scale.x=flame.scale.z=1+Math.sin(b.life*31)*.12;flame.scale.y=1+Math.sin(b.life*43)*.16;}const segment=new THREE.Line3(prev,b.mesh.position);const closest=segment.closestPointToPoint(dragon.position,true,new THREE.Vector3());if(closest.distanceTo(dragon.position)<1.5){hurt();b.life=0;}}
   else {
    const segment=new THREE.Line3(prev,b.mesh.position);let hit=null,nearest=Infinity;
    for(const e of enemies){if(e.dead)continue;const closest=segment.closestPointToPoint(e.mesh.position,true,V(0,0,0));
