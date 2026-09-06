@@ -1,6 +1,6 @@
 # AZURE RELIC — 蒼海の翼
 
-公開ゲーム: https://hidecade.github.io/3D-Game/
+公開ゲーム: https://hidecade.github.io/AZURE-RELIC/
 
 `main`へのプッシュ後、GitHub Actionsでテストとビルドを行い、成功するとGitHub Pagesへ自動公開します。
 
