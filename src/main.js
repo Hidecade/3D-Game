@@ -82,6 +82,16 @@ let stageTime=0,midBoss=null,midBossSpawned=false;
 const lasers=[];
 const enemies=[], bullets=[], effects=[], locks=new Set(), keys=new Set();
 const control={x:innerWidth*.5,y:innerHeight*.48,steerX:0,steerY:0,shooting:false,locking:false};
+try{control.invertY=localStorage.getItem('azure-relic-invert-y')==='true';}catch{control.invertY=false;}
+function refreshInvertButton(){
+ $('invert-y').textContent=`上下反転 ${control.invertY?'ON':'OFF'}`;
+ $('invert-y').ariaPressed=String(control.invertY);
+}
+$('invert-y').onclick=()=>{
+ control.invertY=!control.invertY;refreshInvertButton();
+ try{localStorage.setItem('azure-relic-invert-y',String(control.invertY));}catch{}
+};
+refreshInvertButton();
 const player={x:0,y:7};
 const view={yaw:0,targetYaw:0,label:'前方'},radarDots=new Map();
 let ambushTimer=12,ambushWave=0;

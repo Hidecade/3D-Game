@@ -23,10 +23,12 @@ const installUpdatePrompt=()=>{};
 const soundEvents=[];let soundEnabled=false,soundUnlocks=0;
 const createSoundEffects=()=>({play(name){soundEvents.push(name);},setEnabled(value){soundEnabled=value;},setSuspended(){},stopAll(){},async unlock(){soundUnlocks++;}});
 const events=new Map();
-const context=vm.createContext({createSkyInsect,animateSkyInsect,createSkyBeast,createDragon,animateDragon,dragonMouth,createOcean,courseAt,stepSteering,aimPixels,reticleWorldPoint,turnTowardAim,VIEW_DIRECTIONS,updateView,radarContact,createCentipede,animateCentipede,createLaser,updateLaser,disposeLaser,createWarship,updateWarship,warshipMuzzle,seaHeight,createRider,animateRider,riderMuzzle,resetRider,createSoundEffects,createMusic,installTouchControls,installUpdatePrompt,THREE:{...Three,WebGLRenderer:Renderer},document:{getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);},createElement:element,body:element(),addEventListener(){}},window:{addEventListener(name,fn){events.set(name,fn);}},innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>0},requestAnimationFrame(){},console});
+const savedSettings=new Map([['azure-relic-invert-y','true']]);
+const localStorage={getItem:key=>savedSettings.get(key),setItem:(key,value)=>savedSettings.set(key,value)};
+const context=vm.createContext({localStorage,createSkyInsect,animateSkyInsect,createSkyBeast,createDragon,animateDragon,dragonMouth,createOcean,courseAt,stepSteering,aimPixels,reticleWorldPoint,turnTowardAim,VIEW_DIRECTIONS,updateView,radarContact,createCentipede,animateCentipede,createLaser,updateLaser,disposeLaser,createWarship,updateWarship,warshipMuzzle,seaHeight,createRider,animateRider,riderMuzzle,resetRider,createSoundEffects,createMusic,installTouchControls,installUpdatePrompt,THREE:{...Three,WebGLRenderer:Renderer},document:{getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);},createElement:element,body:element(),addEventListener(){}},window:{addEventListener(name,fn){events.set(name,fn);}},innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>0},requestAnimationFrame(){},console});
 const source=fs.readFileSync(new URL('../src/main.js',import.meta.url),'utf8').replace(/^import .*;$/gm,'');
 vm.runInContext(source+`;globalThis.test={reset,pause,frame,createEnemy,spawnWarship,damageEnemy,shoot,releaseLocks,hurt,keys,control,player,screenPos,dragon,rider,locks,enemies,camera,updateGameplay,get state(){return {effects,view,radarDots,mode,elapsed,stageTime,midBoss,midBossSpawned,health,score,kills,bossSpawned,boss,bullets:bullets.length,projectiles:bullets,laserFlights:lasers,lasers:lasers.length,travel}},setInvulnerable(n){invulnerable=n}}`,context);
-const g=context.test;assert.equal(soundEnabled,true,'sound is enabled by default');
+const g=context.test;assert.equal(g.control.invertY,true,'saved inversion is restored');elements.get('invert-y').onclick();assert.equal(savedSettings.get('azure-relic-invert-y'),'false');assert.equal(soundEnabled,true,'sound is enabled by default');
 // Steering visibly strengthens the stroke, mirrors the wing lean, and settles.
 {
  const right=createDragon({referenceStyle:true}),left=createDragon({referenceStyle:true});
@@ -245,4 +247,16 @@ animateSkyInsect(insect.creature,.15);assert.notEqual(frontWing.rotation.z,flapA
 assert.ok(dragonMouth(insect.creature).z>insect.mesh.position.z,'attack originates at the head');
 g.damageEnemy(insect,3);assert.equal(g.state.effects.filter(e=>e.mesh.name==='wing-debris').length,4,'all four wings break away');
 g.reset();
+g.reset();const unchangedAim={x:g.control.x,y:g.control.y};
+elements.get('invert-y').onclick();assert.equal(g.control.invertY,true);assert.equal(elements.get('invert-y').ariaPressed,'true');
+for(const touch of [false,true]){
+ for(const up of [false,true]){
+  const c={steerX:0,steerY:0,invertY:true};if(touch){c.touchY=up?1:-1;c.touchX=.5;}
+  stepSteering(c,new Set([up?'KeyW':'KeyS']),.1);assert.ok(up?c.steerY<0:c.steerY>0,'keyboard and touch reverse vertical movement');
+  if(touch)assert.ok(c.steerX>0,'horizontal movement stays normal');
+ }
+}
+assert.equal(g.control.x,unchangedAim.x);assert.equal(g.control.y,unchangedAim.y,'toggle preserves aim');
+g.reset();assert.equal(g.control.invertY,true,'retry retains inversion');
+localStorage.setItem=()=>{throw new Error('storage unavailable');};elements.get('invert-y').onclick();assert.equal(g.control.invertY,false,'toggle works without storage');
 console.log('PASS: rider swivelling and weapon emission, keyboard start/retry, four-direction attacks, radar, floating warships, turret fire, surface lock/hit/destruction, automatic rail, reticle-facing rotation, flying lasers, pause, segmented midboss, final boss, victory and defeat.');

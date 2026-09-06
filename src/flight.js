@@ -8,6 +8,7 @@ export function courseAt(time){
 export function stepSteering(control,keys,dt){
  let dx=control.touchX??(Number(keys.has('KeyD'))-Number(keys.has('KeyA')));
  let dy=control.touchY??(Number(keys.has('KeyW'))-Number(keys.has('KeyS')));
+ if(control.invertY)dy=-dy;
  const magnitude=Math.hypot(dx,dy);if(magnitude>1){dx/=magnitude;dy/=magnitude;}
  control.steerX=dx?MathUtils.clamp(control.steerX+dx*dt*1.65,-1,1):MathUtils.damp(control.steerX,0,3.2,dt);
  control.steerY=dy?MathUtils.clamp(control.steerY+dy*dt*1.65,-1,1):MathUtils.damp(control.steerY,0,3.2,dt);
