@@ -43,7 +43,7 @@ function bake(group){
  for(const [material,geos] of buckets){group.add(new THREE.Mesh(mergeGeometries(geos),material));geos.forEach(g=>g.dispose());}
 }
 
-// Eagle silhouette with a heavy beast's breast, crown plumage and grasping talons.
+// Lean raptor silhouette with oversized flight feathers and a narrow predatory gaze.
 // Articulation matches the flight and breakup rigs used by the game.
 export function createSkyBeast({kind='amber'}={}){
  const root=new THREE.Group();root.name='eagle-sky-beast';
@@ -53,7 +53,7 @@ export function createSkyBeast({kind='amber'}={}){
  for(let row=0;row<3;row++)for(let s=-1;s<=1;s++)
   feather(root,row%2?cover:ivory,[s*.34,.65-row*.17,-1+row*.65],[s*.5,.4-row*.17,.1+row*.65],.26);
  const neck=new THREE.Group();neck.position.set(0,.48,-1.28);root.add(neck);
- oval(neck,ivory,0,.23,-.35,.6,.65,.7);
+ oval(neck,ivory,0,.2,-.35,.48,.46,.7);
  // Hooked beak, built from a broad upper ridge ending in a downward point.
  const profile=[[-.72,.38],[-1.19,.28],[-1.5,-.08],[-1.36,-.48],[-1.16,-.13],[-.72,-.08]];
  const vertices=[];for(const x of [-.22,.22])for(const [z,y] of profile)vertices.push(x,y,z);
@@ -63,15 +63,21 @@ export function createSkyBeast({kind='amber'}={}){
  neck.add(new THREE.Mesh(beak,gold));
  const jaw=new THREE.Group();neck.add(jaw);oval(jaw,gold,0,-.14,-.89,.17,.09,.3);
  for(const s of [-1,1]){
-  oval(neck,gold,s*.5,.33,-.65,.09,.13,.16);
-  oval(neck,tips,s*.56,.34,-.69,.025,.085,.075);
-  feather(neck,dark,[s*.3,.62,-.35],[s*.65,1.2,.5],.19);
-  feather(neck,ivory,[s*.37,.04,-.25],[s*.72,-.15,.65],.26);
+  // Pointed almond eyes sit below a heavy, sloping brow instead of round sockets.
+  const eye=new THREE.BufferGeometry();
+  eye.setAttribute('position',new THREE.Float32BufferAttribute([
+   s*.445,.23,-.94, s*.49,.38,-.6, s*.445,.4,-.35, s*.49,.26,-.61,
+  ],3));
+  eye.setIndex([0,1,3,1,2,3]);eye.computeVertexNormals();neck.add(new THREE.Mesh(eye,gold));
+  oval(neck,tips,s*.505,.305,-.65,.02,.058,.027);
+  const brow=oval(neck,dark,s*.45,.405,-.64,.085,.07,.34);brow.rotation.x=-.28;
+  feather(neck,dark,[s*.25,.53,-.35],[s*.48,.77,.8],.15);
+  feather(neck,ivory,[s*.3,.04,-.25],[s*.57,-.1,.68],.2);
  }
  const mouth=new THREE.Object3D();mouth.position.set(0,-.12,-1.47);neck.add(mouth);
  const wings=[];
  for(const s of [-1,1]){
-  const shoulder=new THREE.Group();shoulder.position.set(s*.65,.35,-.4);root.add(shoulder);
+  const shoulder=new THREE.Group();shoulder.position.set(s*.46,.25,-.34);shoulder.scale.set(1.32,1,1.16);root.add(shoulder);
   oval(shoulder,dark,s*1.1,0,.12,1.4,.22,.7);
   for(let i=0;i<7;i++)feather(shoulder,i%2?cover:dark,[s*(.15+i*.3),.1,0],[s*(.65+i*.32),-.04,1.5+i*.08],.27);
   const outer=new THREE.Group();outer.position.set(s*2.35,0,.08);shoulder.add(outer);
@@ -87,6 +93,10 @@ export function createSkyBeast({kind='amber'}={}){
  const fan=new THREE.Group();fan.position.set(0,.05,1.4);root.add(fan);
  for(let i=-3;i<=3;i++)feather(fan,i%2?cover:ivory,[i*.1,0,0],[i*.4,-.15,2.2-Math.abs(i)*.15],.25);
  bake(fan);bake(jaw);bake(neck);bake(root);
+ // Shrink the torso and talons together while keeping the full feathered wingspan.
+ for(const part of root.children)if(part.isMesh)part.scale.set(.7,.7,.82);
+ neck.position.set(0,.34,-1.05);neck.scale.set(.86,.86,.9);
+ fan.position.z=1.15;fan.scale.set(.85,.85,.85);
  root.userData.rig={wings,tail:[fan],neck,jaw,mouth,scarf:null,ancient:false};
  return root;
 }
