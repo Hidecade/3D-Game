@@ -23,7 +23,7 @@ const createSoundEffects=()=>({play(name){soundEvents.push(name);},setEnabled(va
 const events=new Map();
 const context=vm.createContext({createDragon,animateDragon,dragonMouth,createOcean,courseAt,stepSteering,aimPixels,reticleWorldPoint,turnTowardAim,VIEW_DIRECTIONS,updateView,radarContact,createCentipede,animateCentipede,createLaser,updateLaser,disposeLaser,createWarship,updateWarship,warshipMuzzle,seaHeight,createRider,animateRider,riderMuzzle,resetRider,createSoundEffects,createMusic,installTouchControls,installUpdatePrompt,THREE:{...Three,WebGLRenderer:Renderer},document:{getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);},createElement:element,body:element(),addEventListener(){}},window:{addEventListener(name,fn){events.set(name,fn);}},innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>0},requestAnimationFrame(){},console});
 const source=fs.readFileSync(new URL('../src/main.js',import.meta.url),'utf8').replace(/^import .*;$/gm,'');
-vm.runInContext(source+`;globalThis.test={reset,pause,frame,createEnemy,spawnWarship,damageEnemy,shoot,releaseLocks,hurt,keys,control,player,screenPos,dragon,rider,locks,enemies,camera,updateGameplay,get state(){return {view,radarDots,mode,elapsed,stageTime,midBoss,midBossSpawned,health,score,kills,bossSpawned,boss,bullets:bullets.length,projectiles:bullets,laserFlights:lasers,lasers:lasers.length,travel}},setInvulnerable(n){invulnerable=n}}`,context);
+vm.runInContext(source+`;globalThis.test={reset,pause,frame,createEnemy,spawnWarship,damageEnemy,shoot,releaseLocks,hurt,keys,control,player,screenPos,dragon,rider,locks,enemies,camera,updateGameplay,get state(){return {effects,view,radarDots,mode,elapsed,stageTime,midBoss,midBossSpawned,health,score,kills,bossSpawned,boss,bullets:bullets.length,projectiles:bullets,laserFlights:lasers,lasers:lasers.length,travel}},setInvulnerable(n){invulnerable=n}}`,context);
 const g=context.test;assert.equal(soundEnabled,true,'sound is enabled by default');
 // Steering visibly strengthens the stroke, mirrors the wing lean, and settles.
 {
@@ -206,4 +206,28 @@ for(const turns of [1,2,3]){
  press('Escape');const yaw=rig.yaw;g.frame(160);assert.equal(rig.yaw,yaw);g.reset();assert.equal(rig.yaw,0,'retry restores forward rider pose');
 }
 for(const name of ['laser','homing','damage','smallExplosion','mediumExplosion','largeExplosion','shipShot','bossVolley','summon','bossWarning'])assert.ok(soundEvents.includes(name),'game triggers SE '+name);
+
+// Actual wings and body detach without changing their world position.
+g.reset();
+const shattered=g.createEnemy(8,15,-40),wing=shattered.creature.userData.rig.wings[0].shoulder;
+wing.updateWorldMatrix(true,true);const wingPosition=wing.getWorldPosition(new Three.Vector3());
+g.damageEnemy(shattered,3);
+let debris=g.state.effects.filter(e=>e.debris);
+assert.equal(debris.filter(e=>e.mesh.name==='wing-debris').length,2);
+assert.equal(debris.filter(e=>e.mesh.name==='body-debris').length,1);
+assert.ok(wing.getWorldPosition(new Three.Vector3()).distanceTo(wingPosition)<1e-6,'detachment preserves world transform');
+const count=debris.length;g.damageEnemy(shattered,3);assert.equal(g.state.effects.filter(e=>e.debris).length,count,'no duplicate breakup');
+g.updateGameplay(.01);assert.equal(shattered.mesh.parent,null);assert.ok(wing.parent.parent,'fragments survive enemy cleanup');
+const chunk=debris[0],position=chunk.mesh.position.clone();
+g.frame(100000);assert.ok(chunk.mesh.position.distanceTo(position)>0);assert.ok(chunk.mesh.rotation.toArray().slice(0,3).some(n=>Math.abs(n)>0));
+for(let i=1;i<65;i++)g.frame(100000+i*40);
+assert.equal(g.state.effects.filter(e=>e.debris).length,0,'debris expires');assert.equal(chunk.mesh.parent,null);
+g.reset();const wreck=g.spawnWarship(8,-40);g.damageEnemy(wreck,1);
+debris=g.state.effects.filter(e=>e.debris);
+assert.equal(debris.filter(e=>e.mesh.name==='wood-debris').length,18);
+assert.equal(debris.filter(e=>e.mesh.name==='iron-debris').length,6);
+assert.equal(debris.filter(e=>e.mesh.name==='turret-debris').length,1);
+assert.ok(debris.find(e=>e.mesh.name==='wood-debris').mesh.children[0].material.map,'wood retains grain');
+g.reset();assert.equal(g.state.effects.length,0);assert.ok(debris.every(e=>!e.mesh.parent),'retry clears wreckage');
+
 console.log('PASS: rider swivelling and weapon emission, keyboard start/retry, four-direction attacks, radar, floating warships, turret fire, surface lock/hit/destruction, automatic rail, reticle-facing rotation, flying lasers, pause, segmented midboss, final boss, victory and defeat.');

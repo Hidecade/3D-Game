@@ -177,7 +177,7 @@ function updateScore(){ $('score').textContent=String(score).padStart(6,'0');$('
 function burst(pos,color='#ffd19b',count=18){
  for(let i=0;i<count;i++){const m=mesh(new THREE.IcosahedronGeometry(.12+rand()*.25,0),mat(color,{emissive:color,emissiveIntensity:1.6}),pos.x,pos.y,pos.z);effects.push({mesh:m,velocity:V((rand()-.5)*20,(rand()-.5)*20,(rand()-.5)*20),life:.5+rand()*.5,max:1});}
 }
-function damageEnemy(e,amount){if(e.dead)return;if(e.midBoss){damageMidBoss(e,amount);return;}e.hp-=amount;burst(e.mesh.position,'#a9edee',3);if(e.boss)$('boss-health').style.width=`${Math.max(0,e.hp/e.maxHp)*100}%`;if(e.hp<=0){e.dead=true;locks.delete(e);e.marker?.remove();if(!e.boss){burst(e.mesh.position,'#ffc080',20);se.play(e.warship?'mediumExplosion':'smallExplosion');}combo=elapsed-lastKill<3?combo+1:1;lastKill=elapsed;kills++;score+=(e.boss?5000:e.warship?600:100)*Math.min(combo,8);updateScore();if(e.boss)beginBossCrash(e);}}
+function damageEnemy(e,amount){if(e.dead)return;if(e.midBoss){damageMidBoss(e,amount);return;}e.hp-=amount;burst(e.mesh.position,'#a9edee',3);if(e.boss)$('boss-health').style.width=`${Math.max(0,e.hp/e.maxHp)*100}%`;if(e.hp<=0){e.dead=true;locks.delete(e);e.marker?.remove();if(!e.boss){breakEnemy(e);burst(e.mesh.position,'#ffc080',20);se.play(e.warship?'mediumExplosion':'smallExplosion');}combo=elapsed-lastKill<3?combo+1:1;lastKill=elapsed;kills++;score+=(e.boss?5000:e.warship?600:100)*Math.min(combo,8);updateScore();if(e.boss)beginBossCrash(e);}}
 function launchBolt(origin,target,color,enemy=false,homing=null,damage=1){
  const m=mesh(new THREE.SphereGeometry(enemy?.32:.14,10,8),mat(color,{emissive:color,emissiveIntensity:3}),origin.x,origin.y,origin.z);
  if(enemy){
@@ -268,6 +268,37 @@ function beginBossCrash(enemy){
  bossCrash={enemy,age:0,impactAge:0,impacted:false};
  camera.position.copy(enemy.mesh.position).add(V(30,14,45));
  camera.lookAt(enemy.mesh.position);camera.updateMatrixWorld();
+}
+function throwDebris(part,origin,label){
+ part.updateWorldMatrix(true,true);
+ const center=new THREE.Box3().setFromObject(part).getCenter(V(0,0,0));
+ const chunk=new THREE.Group();chunk.position.copy(center);scene.add(chunk);chunk.attach(part);
+ chunk.name=label;
+ const direction=center.clone().sub(origin);direction.y=0;
+ if(direction.lengthSq()<.01)direction.set(rand()-.5,0,rand()-.5);
+ direction.normalize().multiplyScalar(7+rand()*9);direction.y=6+rand()*9;
+ effects.push({mesh:chunk,velocity:direction,spin:V((rand()-.5)*5,(rand()-.5)*5,(rand()-.5)*5),gravity:15,life:2.4,max:2.4,debris:true});
+}
+function breakEnemy(e){
+ const origin=e.mesh.position.clone(),rig=e.creature.userData.rig;
+ if(e.warship){
+  // Reuse the boat's textured wood and iron materials for recognizable wreckage.
+  const wood=rig.body.children.find(o=>o.isMesh&&o.material.map)?.material;
+  const iron=rig.turret.children.find(o=>o.isMesh)?.material;
+  e.creature.updateWorldMatrix(true,true);
+  for(let i=0;i<24;i++){
+   const metal=i>=18;
+   const piece=new THREE.Mesh(new THREE.BoxGeometry(metal?.45:.25,.18,metal?.7:1.5+rand()*2.5),metal?iron:wood);
+   piece.position.set((rand()-.5)*4,1+rand(),(rand()-.5)*13);
+   e.creature.add(piece);
+   throwDebris(piece,origin,metal?'iron-debris':'wood-debris');
+  }
+  throwDebris(rig.turret,origin,'turret-debris');
+ }else{
+  for(const wing of rig.wings)throwDebris(wing.shoulder,origin,'wing-debris');
+  if(rig.tail[0])throwDebris(rig.tail[0],origin,'tail-debris');
+  throwDebris(e.creature,origin,'body-debris');
+ }
 }
 function updateBossCrash(dt){
  if(document.hidden)return;
@@ -455,7 +486,7 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous
   else updateGameplay(dt);
  }
  if(mode==='win'||mode==='lose')updateHomingLasers(dt);
- if(mode!=='paused')for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.life-=dt;e.mesh.position.addScaledVector(e.velocity,dt);e.velocity.y-=dt*5;e.mesh.scale.setScalar(Math.max(0,e.life/e.max));if(e.life<=0){disposeGroup(e.mesh);effects.splice(i,1);}}
+ if(mode!=='paused')for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.life-=dt;e.mesh.position.addScaledVector(e.velocity,dt);e.velocity.y-=dt*(e.gravity??5);if(e.spin){e.mesh.rotation.x+=e.spin.x*dt;e.mesh.rotation.y+=e.spin.y*dt;e.mesh.rotation.z+=e.spin.z*dt;}e.mesh.scale.setScalar(Math.max(0,e.debris?Math.min(1,e.life/.5):e.life/e.max));if(e.life<=0){disposeGroup(e.mesh);effects.splice(i,1);}}
  if(invulnerable<1)$('flash').style.opacity=0;
  renderer.render(scene,camera);
 }
