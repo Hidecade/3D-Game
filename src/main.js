@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createDragon, animateDragon, dragonMouth } from './dragons.js';
 import { createSkyBeast } from './sky-beasts.js';
+import { createSkyInsect, animateSkyInsect } from './sky-insects.js';
 import { createOcean } from './ocean.js';
 import { courseAt, stepSteering, aimPixels, reticleWorldPoint, turnTowardAim, VIEW_DIRECTIONS, updateView, radarContact } from './flight.js';
 import { createCentipede, animateCentipede } from './centipede.js';
@@ -96,17 +97,17 @@ function tone(freq,duration=.1,type='sine',volume=.035,end=freq){
 function announce(text,duration=4){$('announcement').textContent=text;announcementTime=duration;$('announcement').style.opacity=1;}
 function screenPos(pos){const p=pos.clone().project(camera);return {x:(p.x*.5+.5)*innerWidth,y:(-.5*p.y+.5)*innerHeight,visible:p.z>-1&&p.z<1&&Math.abs(p.x)<1.2&&Math.abs(p.y)<1.2};}
 function disposeGroup(g){g.traverse(o=>{if(o.geometry)o.geometry.dispose();});g.removeFromParent();}
-function createEnemy(x,y,z,isBoss=false,approach='front'){
+function createEnemy(x,y,z,isBoss=false,approach='front',insect=false){
  const g=new THREE.Group();g.position.set(x,y,z);scene.add(g);
- const creature=isBoss?createDragon({kind:'ancient',ancient:true}):createSkyBeast({kind:rand()>.5?'amber':'storm'});
+ const creature=isBoss?createDragon({kind:'ancient',ancient:true}):insect?createSkyInsect():createSkyBeast({kind:rand()>.5?'amber':'storm'});
  creature.rotation.y=approach==='front'?Math.PI:0;creature.scale.setScalar(isBoss?2.65:.73);g.add(creature);
- const e={mesh:g,creature,hp:isBoss?220:3,maxHp:isBoss?220:3,boss:isBoss,approach,age:0,baseX:x,baseY:y,baseZ:z,sideOffset:x-courseAt(elapsed).x,fire:2+rand()*2,phase:rand()*6,dead:false,marker:null};enemies.push(e);return e;
+ const e={mesh:g,creature,hp:isBoss?220:3,maxHp:isBoss?220:3,boss:isBoss,insect:!isBoss&&insect,approach,age:0,baseX:x,baseY:y,baseZ:z,sideOffset:x-courseAt(elapsed).x,fire:2+rand()*2,phase:rand()*6,dead:false,marker:null};enemies.push(e);return e;
 }
 function spawnAmbush(){
  const side=['rear','left','right'][ambushWave++%3],route=courseAt(elapsed);
  for(let i=0;i<3;i++){
-  if(side==='rear')createEnemy(route.x+(i-1)*10,9+i*2,112+i*12,false,'rear');
-  else createEnemy(route.x+(side==='left'?-1:1)*(60+i*12),9+i*2,3+(i-1)*13,false,side);
+  if(side==='rear')createEnemy(route.x+(i-1)*10,9+i*2,112+i*12,false,'rear',i===1);
+  else createEnemy(route.x+(side==='left'?-1:1)*(60+i*12),9+i*2,3+(i-1)*13,false,side,i===1);
  }
  announce(side==='rear'?'後方から敵接近 / Q / E で旋回':side==='left'?'左側から敵接近 / レーダーを確認':'右側から敵接近 / レーダーを確認',4);
 }
@@ -433,13 +434,13 @@ function updateGameplay(dt){
  }
  if((!midBoss||midBoss.dead)&&stageTime<66){ambushTimer-=dt;if(ambushTimer<=0){spawnAmbush();ambushTimer=14;}}
  if(!midBoss||midBoss.dead)waveTimer-=dt;
- if(stageTime<66&&waveTimer<=0&&(!midBoss||midBoss.dead)){const wave=Math.floor(stageTime/6);const count=3+Math.min(3,Math.floor(stageTime/20));for(let j=0;j<count;j++)createEnemy((j-(count-1)/2)*9+Math.sin(wave)*8,9+Math.sin(j*1.7+wave)*6,-125-j*10);waveTimer=6; if(wave===3)announce('右クリック長押しで捕捉 → 離してホーミングレーザー');}
+ if(stageTime<66&&waveTimer<=0&&(!midBoss||midBoss.dead)){const wave=Math.floor(stageTime/6);const count=3+Math.min(3,Math.floor(stageTime/20));for(let j=0;j<count;j++)createEnemy((j-(count-1)/2)*9+Math.sin(wave)*8,9+Math.sin(j*1.7+wave)*6,-125-j*10,false,'front',j%3===1);waveTimer=6; if(wave===3)announce('右クリック長押しで捕捉 → 離してホーミングレーザー');}
  if(stageTime>=70&&!bossSpawned){bossSpawned=true;music.start(true,'boss');boss=createEnemy(0,17,-155,true);$('boss-bar').hidden=false;$('boss-name').textContent='ANCIENT DRAGON / 古竜アシュガル';$('boss-health').style.width='100%';announce('WARNING  /  聖域の守護者 接近',5);se.play('bossWarning');}
  const progress=Math.min(100,Math.min(stageTime/70,1)*80+(boss?((boss.maxHp-boss.hp)/boss.maxHp)*20:0));$('distance').textContent=`${Math.floor(progress)}%`;$('progress').style.width=`${progress}%`;
  for(const e of enemies){
   if(e.dead)continue;
   if(e.warship){updateShip(e,dt);if(e.dead)continue;}
-  else if(!e.midBoss){e.age+=dt;e.fire-=dt;animateDragon(e.creature,e.age+e.phase,{bank:Math.cos(e.age),breathing:e.fire<.45});
+  else if(!e.midBoss){e.age+=dt;e.fire-=dt;if(e.insect)animateSkyInsect(e.creature,e.age+e.phase);else animateDragon(e.creature,e.age+e.phase,{bank:Math.cos(e.age),breathing:e.fire<.45});
   if(e.boss){e.mesh.position.z=THREE.MathUtils.lerp(e.mesh.position.z,-60,dt*.4);e.mesh.position.x=Math.sin(e.age*.38)*17;e.mesh.position.y=16+Math.sin(e.age*.7)*5;e.mesh.rotation.z=Math.sin(e.age*.38)*-.1;}
   else{
    if(e.approach==='left'||e.approach==='right'){
