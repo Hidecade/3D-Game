@@ -37,4 +37,14 @@ event('touch-stick','pointermove',10,30,80);assert.ok(control.touchX<0,'stick ke
 event('touch-stick','pointerdown',16,90,30);event('touch-stick','pointerup',10,30,80);assert.ok(control.touchX>0,'new stick touch replaces a stale pointer');
 windowEvents.get('pointerup')({pointerId:16});assert.equal(control.touchX,undefined,'window release handles missed element release');
 event('touch-stick','pointerdown',17,100,30);globalThis.innerWidth=400;windowEvents.get('resize')();assert.equal(control.touchX,undefined,'rotation cancels old gesture');
+touch.reset();turns=[];let now=1000;const originalNow=Date.now;Date.now=()=>now;
+event('touch-stick','pointerdown',30,105,60);now+=80;event('touch-stick','pointerup',30,105,60);
+now+=100;event('touch-stick','pointerdown',31,105,60);assert.deepEqual(turns,['KeyE'],'two quick right taps turn once');
+now+=30;event('touch-stick','pointermove',31,110,60);assert.equal(turns.length,1,'holding right does not repeat');
+event('touch-stick','pointerup',31,110,60);
+touch.reset();turns=[];now+=1000;
+event('touch-stick','pointerdown',32,105,60);now+=500;event('touch-stick','pointermove',32,60,60);now+=50;event('touch-stick','pointermove',32,105,60);assert.equal(turns.length,0,'long movement does not count as a tap');
+touch.reset();now+=1000;event('touch-stick','pointerdown',33,60,60);event('touch-stick','pointermove',33,105,60);now+=70;event('touch-stick','pointermove',33,60,60);now+=70;event('touch-stick','pointermove',33,105,60);assert.equal(turns.length,1,'double flick works without lifting finger');
+touch.reset();turns=[];event('touch-stick','pointerdown',34,105,60);now+=50;event('touch-stick','pointercancel',34,105,60);now+=50;event('touch-stick','pointerdown',35,105,60);assert.equal(turns.length,0,'cancel clears pending double tap');
+touch.reset();Date.now=originalNow;
 console.log('PASS: automatic touch UI, simultaneous movement/aim, lock drag/release, pointer cancellation, pause reset, view buttons and mouse isolation.');
