@@ -157,11 +157,15 @@ g.reset();g.setInvulnerable(1000);const ship=g.spawnWarship(0,-65);ship.fire=0;g
 assert.ok(g.state.bullets>0,'ship turret fires at the dragon');assert.ok(g.state.radarDots.get(ship).className.includes('surface'));
 assert.ok(Math.abs(ship.mesh.position.y-(seaHeight(ship.mesh.position.x,ship.mesh.position.z,0,0)+.95))<1e-8,'ship floats at animated sea height');
 mouseDown(2);g.updateGameplay(.26);const shipPoint=g.screenPos(ship.mesh.position);mouseMove(shipPoint.x,shipPoint.y);g.updateGameplay(.01);
-assert.ok(g.locks.has(ship),'surface ship can be locked');mouseUp(2);assert.equal(ship.hp,18,'ship is not damaged until laser arrives');
-for(let i=0;i<100;i++)g.updateGameplay(1/60);assert.equal(ship.hp,11,'homing laser damages warship');
+assert.ok(g.locks.has(ship),'surface ship can be locked');mouseUp(2);assert.equal(ship.hp,1,'ship is not damaged until laser arrives');
 press('Escape');const shipPosition=ship.mesh.position.clone();g.frame(128);assert.equal(ship.mesh.position.distanceTo(shipPosition),0,'pause freezes ship');press('Enter');
-g.damageEnemy(ship,12);g.updateGameplay(.02);assert.equal(ship.mesh.parent,null);assert.equal(g.state.radarDots.has(ship),false);assert.ok(g.state.score>=600,'ship destruction awards score');
+for(let i=0;i<100;i++)g.updateGameplay(1/60);assert.ok(ship.dead,'one homing laser destroys warship');
+assert.equal(ship.mesh.parent,null);assert.equal(g.state.radarDots.has(ship),false);assert.ok(g.state.score>=600,'ship destruction awards score');
 g.reset();assert.equal(g.enemies.filter(e=>e.warship).length,0);
+const easyBoat=g.spawnWarship(0,-40);g.updateGameplay(.01);
+const boatSight=g.screenPos(easyBoat.mesh.position);mouseMove(boatSight.x,boatSight.y);mouseDown();mouseUp();
+assert.equal(easyBoat.hp,1,'boat waits for laser impact');
+for(let i=0;i<90;i++)g.updateGameplay(1/60);assert.ok(easyBoat.dead,'one normal laser destroys the boat');
 // Side/rear views turn the rider and gun while the dragon keeps flying forward.
 for(const turns of [1,2,3]){
  g.reset();for(let i=0;i<turns;i++)press('KeyE');for(let i=0;i<90;i++)g.updateGameplay(1/60);

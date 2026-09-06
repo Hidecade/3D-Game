@@ -110,7 +110,7 @@ function spawnAmbush(){
 function spawnWarship(x,z){
  const g=new THREE.Group();g.position.set(x,-1,z);scene.add(g);
  const model=createWarship();model.rotation.y=Math.PI;g.add(model);
- const e={mesh:g,creature:model,warship:true,hp:18,maxHp:18,hitRadius:3.5,age:0,baseX:x,phase:rand()*6,fire:3,dead:false,marker:null};
+ const e={mesh:g,creature:model,warship:true,hp:1,maxHp:1,hitRadius:3.5,age:0,baseX:x,phase:rand()*6,fire:3,dead:false,marker:null};
  enemies.push(e);updateWarship(model,g.position,dragon.position,t,travel,0);return e;
 }
 function updateShip(e,dt){
@@ -183,7 +183,7 @@ function launchBolt(origin,target,color,enemy=false,homing=null,damage=1){
   const flame=mesh(new THREE.ConeGeometry(.29,1.7,9),mat('#ffb24b',{emissive:'#ff7a27',emissiveIntensity:2,transparent:true,opacity:.65,depthWrite:false}),0,0,-.85,m);flame.rotation.x=-Math.PI/2;
   m.lookAt(target);
  }else {m.scale.setScalar(1.8);m.lookAt(target);}
- const vel=target.clone().sub(origin).normalize().multiplyScalar(enemy?30:180);bullets.push({mesh:m,velocity:vel,enemy,homing,damage,life:enemy?9:2.2});
+ const vel=target.clone().sub(origin).normalize().multiplyScalar(enemy?26:180);bullets.push({mesh:m,velocity:vel,enemy,homing,damage,life:enemy?9:2.2});
 }
 function laserAim(){
  let nearest=null,best=Infinity;
@@ -241,7 +241,7 @@ function releaseLocks(){
  }else clearLocks();
 }
 function clearLocks(){for(const e of locks){e.marker?.remove();e.marker=null;}locks.clear();control.locking=false;$('reticle').classList.remove('locking');}
-function hurt(){if(invulnerable>0||mode!=='playing')return;health=Math.max(0,health-10);invulnerable=1.2;$('health').style.width=`${health}%`;$('hp-label').textContent=`${health}%`;$('flash').style.opacity=.35;se.play('damage');combo=0;if(!health)finish(false);}
+function hurt(){if(invulnerable>0||mode!=='playing')return;health=Math.max(0,health-10);invulnerable=1.5;$('health').style.width=`${health}%`;$('hp-label').textContent=`${health}%`;$('flash').style.opacity=.35;se.play('damage');combo=0;if(!health)finish(false);}
 function reset(){
  touch.reset();
  music.start(true,'stage');
