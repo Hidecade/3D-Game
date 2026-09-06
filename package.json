@@ -7,7 +7,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node scripts/smoke-test.mjs && node scripts/audio-test.mjs && node scripts/touch-test.mjs"
+    "test": "node scripts/smoke-test.mjs && node scripts/audio-test.mjs && node scripts/touch-test.mjs && node scripts/update-test.mjs"
   },
   "keywords": [],
   "author": "",

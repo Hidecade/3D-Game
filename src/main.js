@@ -9,8 +9,10 @@ import { createRider, animateRider, riderMuzzle, resetRider } from './rider.js';
 import { createSoundEffects } from './sound-effects.js';
 import { createMusic } from './music.js';
 import { installTouchControls } from './touch-controls.js';
+import { installUpdatePrompt } from './update-check.js';
 
 const $ = id => document.getElementById(id);
+installUpdatePrompt();
 const canvas = $('world');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.8));

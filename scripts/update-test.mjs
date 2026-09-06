@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import { installUpdatePrompt } from '../src/update-check.js';
+let clock=100000,remote='first',requests=0,navigated=null,offline=false,fetchOptions;
+const events=new Map(),docEvents=new Map(),buttonEvents=new Map(),banner={hidden:true};
+const doc={hidden:false,getElementById:id=>id==='update-notice'?banner:{addEventListener:(name,fn)=>buttonEvents.set(name,fn)},addEventListener:(name,fn)=>docEvents.set(name,fn)};
+const page={location:{href:'https://hidecade.github.io/AZURE-RELIC/?mode=touch',replace:url=>{navigated=url;}},addEventListener:(name,fn)=>events.set(name,fn)};
+const flush=()=>new Promise(resolve=>setTimeout(resolve,0));
+const app=installUpdatePrompt({currentVersion:'first',page,doc,now:()=>clock,fetchVersion:async(url,options)=>{
+ requests++;fetchOptions=options;assert.equal(url.pathname,'/AZURE-RELIC/version.json');assert.equal(url.searchParams.get('check'),String(clock));
+ if(offline)throw Error('offline');return {ok:true,json:async()=>({version:remote})};
+}});
+await flush();assert.equal(requests,1);assert.equal(banner.hidden,true);assert.equal(fetchOptions.cache,'no-store');
+events.get('pageshow')();events.get('focus')();await flush();assert.equal(requests,1,'resume events are coalesced');
+doc.hidden=true;clock+=11000;remote='second';docEvents.get('visibilitychange')();await flush();assert.equal(requests,1);
+doc.hidden=false;docEvents.get('visibilitychange')();await flush();assert.equal(banner.hidden,false,'new version appears on resume');assert.equal(navigated,null,'never reloads automatically');
+offline=true;clock+=11000;events.get('online')();await flush();assert.equal(banner.hidden,false,'network failure preserves notice');assert.equal(navigated,null);
+buttonEvents.get('click')();const destination=new URL(navigated);assert.equal(destination.pathname,'/AZURE-RELIC/');assert.equal(destination.searchParams.get('_v'),'second');assert.equal(destination.searchParams.get('mode'),'touch');
+offline=false;clock+=11000;remote='first';await app.check();assert.equal(banner.hidden,true,'matching version does not show notice');
+clock+=11000;remote={invalid:true};await app.check();assert.equal(banner.hidden,true,'invalid metadata is ignored');
+console.log('PASS: startup/resume update checks, cache bypass, offline handling, duplicate suppression and user-initiated update navigation.');
