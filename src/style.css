@@ -38,5 +38,8 @@ body.touch-mode{touch-action:none;-webkit-user-select:none;user-select:none}
 
 #update-notice{position:fixed;z-index:20;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);box-sizing:border-box;display:flex;align-items:center;gap:14px;padding:12px 16px;background:#133846f5;border:1px solid #d3c296;border-radius:10px;box-shadow:0 8px 28px #0007;color:#f3f1da;font-size:13px}#update-notice[hidden]{display:none}#update-notice small{display:block;font-size:10px;margin-top:5px;color:#c4d5cf}#update-game{min-height:44px;min-width:88px;padding:8px 12px;background:#e6d3a3;color:#123440;border:0;border-radius:6px;font-size:14px;white-space:nowrap;touch-action:manipulation}
 
-#invert-y{position:fixed;top:82px;left:4.3%;z-index:6;min-height:44px;padding:8px 12px;border:1px solid #d8c39b88;border-radius:4px;background:#123b47e8;color:#ead9b9;font-size:11px;letter-spacing:1px;touch-action:manipulation}
+#invert-y{flex-shrink:0;min-height:44px;padding:8px 12px;border:1px solid #d8c39b88;border-radius:4px;background:#123b47e8;color:#ead9b9;font-size:11px;letter-spacing:1px;touch-action:manipulation}
 #invert-y[aria-pressed="true"]{background:#ead0a6;color:#163946}
+
+.header-right #sound{margin-left:0}
+@media(max-width:440px){header{padding-inline:3%}.brand{font-size:10px;letter-spacing:0;gap:4px}.brand-mark{display:none}.header-right{gap:4px}#invert-y{padding-inline:7px;font-size:10px;letter-spacing:0}}
