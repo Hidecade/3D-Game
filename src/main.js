@@ -4,6 +4,7 @@ import { createSkyBeast } from './sky-beasts.js';
 import { createSkyInsect, animateSkyInsect } from './sky-insects.js';
 import { createOcean } from './ocean.js';
 import { createCavern } from './cavern.js';
+import { createThermalVents } from './thermal-vents.js';
 import { courseAt, stepSteering, aimPixels, reticleWorldPoint, turnTowardAim, VIEW_DIRECTIONS, updateView, radarContact } from './flight.js';
 import { createCentipede, animateCentipede } from './centipede.js';
 import { createLaser, updateLaser, disposeLaser } from './lasers.js';
@@ -77,6 +78,7 @@ for(let i=0;i<34;i++){
 // Articulated player dragon.
 const outdoor=scene.children.filter(o=>!o.isLight&&o!==ocean);
 const cavern=createCavern();scene.add(cavern.root);
+const thermalVents=createThermalVents(scene);
 const dragon=createDragon({referenceStyle:true});scene.add(dragon);
 const rider=createRider();dragon.add(rider);
 
@@ -276,6 +278,7 @@ function releaseLocks(){
 function clearLocks(){for(const e of locks){e.marker?.remove();e.marker=null;}locks.clear();control.locking=false;$('reticle').classList.remove('locking');}
 function hurt(){if(invulnerable>0||mode!=='playing')return;health=Math.max(0,health-10);invulnerable=1.5;$('health').style.width=`${health}%`;$('hp-label').textContent=`${health}%`;$('flash').style.opacity=.35;se.play('damage');combo=0;if(!health)finish(false);}
 function reset(){
+ thermalVents.reset();
  document.body.classList.remove('ending');victoryTime=0;bossCrash=null;dragon.visible=true;
  touch.reset();
  music.start(true,'stage');
@@ -361,6 +364,7 @@ function updateBossCrash(dt){
  }
 }
 function beginVictory(){
+ thermalVents.reset();
  mode='victory';victoryTime=0;touch.reset();keys.clear();clearMovementTap();control.shooting=false;clearLocks();invulnerable=0;dragon.visible=true;
  $('flash').style.opacity=0;$('overlay').hidden=true;$('hud').hidden=true;
  document.body.classList.remove('playing');document.body.classList.add('ending');
@@ -483,6 +487,7 @@ function updateGameplay(dt){
  $('reticle').style.left=`${control.x}px`;$('reticle').style.top=`${control.y}px`;$('reticle').classList.toggle('locking',control.locking);
  if(stageTime>=32&&!midBossSpawned)spawnMidBoss();
  updateMidBoss(dt);
+ thermalVents.update(dt,{stageTime,routeX:route.x,player:dragon.position,time:t,travel,enabled:!midBoss||midBoss.dead,onWarning:()=>announce('水面に熱源反応 ／ 噴き上がる熱風を回避',3),onErupt:()=>se.play('bossVolley'),onHit:hurt});
  if(selectedEpisode===1&&(!midBoss||midBoss.dead)&&stageTime<66){
   shipTimer-=dt;if(shipTimer<=0){const side=shipWave++%2?1:-1;spawnWarship(route.x+side*22,-140);if(shipWave===1){spawnWarship(route.x+25,-190);announce('旧時代の小型戦艦 / 水面の砲台を撃破',4);}shipTimer=19;}
  }
