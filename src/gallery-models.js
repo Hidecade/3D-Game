@@ -8,7 +8,7 @@ import { createWarship } from './warships.js';
 export const galleryModels=[
  {name:'自機のドラゴン ＋ 騎手',description:'蒼海を飛ぶ白い竜と女性の騎手。',create(){const model=createDragon({referenceStyle:true});model.add(createRider());return model;},animate:animateDragon},
  {name:'自機のドラゴン',description:'広い翼と細身の胴体を持つ、蒼と白の竜。',create:()=>createDragon({referenceStyle:true}),animate:animateDragon},
- {name:'女性の騎手',description:'竜の背から銃で戦う、ポニーテールの騎手。',create:createRider},
+ {name:'女性の騎手',description:'金髪のポニーテールと青い瞳を持つ、竜の背から銃で戦う騎手。',create:createRider},
  {name:'鷲型獣 ／ 茶金',description:'大きな羽毛の翼と鋭い目を持つ飛行獣。',create:()=>createSkyBeast({kind:'amber'}),animate:animateDragon},
  {name:'鷲型獣 ／ 青灰',description:'青灰色の羽毛を持つ鷲型獣の別個体。',create:()=>createSkyBeast({kind:'storm'}),animate:animateDragon},
  {name:'四翅の飛行昆虫',description:'金色の翅脈、装甲の節、大顎を持つ空中の昆虫。',create:createSkyInsect,animate:animateSkyInsect},

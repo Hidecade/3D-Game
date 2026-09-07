@@ -2,8 +2,14 @@ import * as THREE from 'three';
 
 const cloth=new THREE.MeshStandardMaterial({color:0x466d78,roughness:.9});
 const leather=new THREE.MeshStandardMaterial({color:0x573e2c,roughness:.85});
-const skin=new THREE.MeshStandardMaterial({color:0xd1ad89,roughness:.8});
-const hair=new THREE.MeshStandardMaterial({color:0x30271f,roughness:.95});
+const skin=new THREE.MeshStandardMaterial({color:0xf0c8b0,roughness:.72});
+const hair=new THREE.MeshStandardMaterial({color:0xc39a49,roughness:.65});
+const hairLight=new THREE.MeshStandardMaterial({color:0xf2d582,roughness:.62});
+const brow=new THREE.MeshStandardMaterial({color:0x86613b,roughness:.85});
+const eyeWhite=new THREE.MeshStandardMaterial({color:0xf8eee4,roughness:.5});
+const iris=new THREE.MeshStandardMaterial({color:0x477fa8,roughness:.38});
+const pupil=new THREE.MeshStandardMaterial({color:0x172431,roughness:.4});
+const lips=new THREE.MeshStandardMaterial({color:0xc5857f,roughness:.75});
 const metal=new THREE.MeshStandardMaterial({color:0x5d7277,roughness:.46,metalness:.6});
 const glow=new THREE.MeshStandardMaterial({color:0xc0ffff,emissive:0x72eaf5,emissiveIntensity:2});
 function oval(g,m,x,y,z,sx,sy,sz){const o=new THREE.Mesh(new THREE.SphereGeometry(1,14,10),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);g.add(o);return o;}
@@ -25,15 +31,37 @@ export function createRider(){
  oval(torso,leather,0,.04,0,.2,.065,.21);
  box(torso,leather,-.12,.27,-.18,.07,.51,.06);
  const head=new THREE.Group();head.position.set(0,.82,-.035);torso.add(head);
- oval(head,skin,0,0,0,.16,.205,.155);oval(head,hair,0,.12,.035,.18,.13,.17);
- for(const side of [-1,1])oval(head,hair,side*.145,-.01,.015,.045,.18,.12);
+ // Adult oval face, a tapered chin and a softer hairline around the forehead.
+ oval(head,skin,0,.01,0,.151,.2,.145);
+ oval(head,skin,0,-.118,-.015,.098,.078,.105);
+ oval(head,hair,0,.135,.035,.166,.12,.151);
+ for(const side of [-1,1]){
+  oval(head,skin,side*.149,-.015,.015,.025,.047,.027);
+  oval(head,hair,side*.142,.015,.05,.033,.155,.09);
+  const lock=oval(head,hairLight,side*.106,.108,-.087,.038,.119,.03);lock.rotation.z=side*.4;
+ }
+ const fringe=oval(head,hairLight,-.028,.161,-.096,.11,.038,.045);fringe.rotation.z=-.3;
  const ponytail=new THREE.Group();ponytail.position.set(0,.09,.17);head.add(ponytail);
  oval(ponytail,leather,0,0,.035,.065,.065,.065);
- limb(ponytail,hair,[0,0,.045],[0,-.19,.28],.095);
- limb(ponytail,hair,[0,-.19,.28],[0,-.43,.38],.075);
- oval(ponytail,hair,0,-.43,.38,.055,.1,.06);
- oval(head,skin,0,-.025,-.16,.045,.055,.055);
- for(const side of [-1,1])oval(head,hair,side*.068,.02,-.146,.023,.024,.015);
+ for(let i=0;i<5;i++){
+  const x=(i-2)*.026;
+  const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(x,0,.035),new THREE.Vector3(x*.9,-.1,.21),new THREE.Vector3(x*1.3,-.3,.31),new THREE.Vector3(x*.6,-.51,.23)]);
+  ponytail.add(new THREE.Mesh(new THREE.TubeGeometry(curve,14,i%2?.025:.034,7,false),i%2?hairLight:hair));
+  oval(ponytail,hairLight,x*.6,-.51,.23,.017,.055,.018);
+ }
+ // Small nose bridge and defined blue eyes, with brows separate from the hair.
+ oval(head,skin,0,.005,-.141,.019,.052,.027);
+ oval(head,skin,0,-.03,-.16,.025,.022,.028);
+ oval(head,lips,0,-.095,-.128,.043,.012,.012);
+ oval(head,skin,0,-.117,-.12,.039,.014,.012);
+ for(const side of [-1,1]){
+  oval(head,eyeWhite,side*.062,.035,-.132,.034,.016,.017);
+  oval(head,iris,side*.06,.035,-.149,.013,.014,.005);
+  oval(head,pupil,side*.06,.035,-.154,.006,.009,.002);
+  oval(head,eyeWhite,side*.06-.004,.04,-.156,.003,.004,.002);
+  const lid=oval(head,brow,side*.064,.051,-.139,.033,.004,.006);lid.rotation.z=side*.1;
+  const eyebrow=oval(head,brow,side*.064,.078,-.127,.036,.006,.008);eyebrow.rotation.z=side*.12;
+ }
  const weapon=new THREE.Group();weapon.position.set(0,.48,-.07);torso.add(weapon);
  // Both hands and the weapon elevate together while the torso turns at the waist.
  limb(weapon,cloth,[.24,0,0],[.34,-.16,-.28],.085);
