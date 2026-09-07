@@ -55,4 +55,11 @@ event('touch-stick','pointerdown',42,60,60);event('touch-stick','pointermove',42
 touch.reset();turns=[];now+=1000;
 event('touch-stick','pointerdown',43,15,60);now+=60;event('touch-stick','pointerup',43,15,60);now+=60;event('touch-stick','pointerdown',44,105,60);assert.equal(turns.length,0,'opposite taps do not form a double tap');
 touch.reset();Date.now=originalNow;
+let blocked=0;const touchDefault={cancelable:true,target:{closest:()=>true},preventDefault(){blocked++;}};
+for(const name of ['touchstart','touchmove','touchend'])windowEvents.get(name)(touchDefault);
+assert.equal(blocked,3,'game surface suppresses browser touch defaults');
+windowEvents.get('touchend')({...touchDefault,target:{closest:()=>false}});assert.equal(blocked,3,'menu button clicks remain available');
+active=false;windowEvents.get('touchstart')(touchDefault);assert.equal(blocked,3,'non-game touches retain click handling');
+for(const name of ['gesturestart','gesturechange','gestureend'])windowEvents.get(name)(touchDefault);
+assert.equal(blocked,6,'Safari zoom gestures are suppressed');
 console.log('PASS: automatic touch UI, simultaneous movement/aim, lock drag/release, pointer cancellation, pause reset, view buttons and mouse isolation.');

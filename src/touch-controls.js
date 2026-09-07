@@ -1,6 +1,13 @@
 export function installTouchControls({control,playing,turn,fire,lock,release,cancel,unlock}){
  const ui=document.getElementById('touch-controls'),stick=document.getElementById('touch-stick'),knob=document.getElementById('touch-knob');
  const pointers=new Map();
+ // Safari can still interpret repeated/multiple touches as browser zoom.
+ // Gameplay uses Pointer Events, so suppress only the browser's touch defaults.
+ const blockZoom=e=>{if(e.cancelable!==false)e.preventDefault();};
+ for(const name of ['gesturestart','gesturechange','gestureend'])window.addEventListener(name,blockZoom,{passive:false});
+ for(const name of ['touchstart','touchmove','touchend'])window.addEventListener(name,e=>{
+  if(playing()&&e.target?.closest?.('#touch-controls, #world'))blockZoom(e);
+ },{passive:false});
  let lastTap=-Infinity,lastDirection=0,downAt=null,activeDirection=0;
  function clearTurnGesture(){lastTap=-Infinity;lastDirection=0;downAt=null;activeDirection=0;}
  function turnGesture(x,y){
