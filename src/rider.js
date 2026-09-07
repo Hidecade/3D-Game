@@ -56,7 +56,12 @@ export function animateRider(root,target,dt){
  rig.pitch=THREE.MathUtils.damp(rig.pitch,THREE.MathUtils.clamp(Math.atan2(local.y,Math.hypot(local.x,local.z)),-.8,.8),15,dt);
  // Hips pivot in the saddle; the upper body completes the backward glance.
  rig.hips.rotation.y=rig.yaw*.65;rig.torso.rotation.y=rig.yaw*.35;
- rig.weapon.rotation.x=rig.pitch;rig.head.rotation.x=rig.pitch*.6;
+ // Aim independently of the mount's banking and the waist's slower turn.
+ rig.torso.updateWorldMatrix(true,true);
+ const torsoTarget=rig.torso.worldToLocal(target.clone());
+ for(const part of [rig.weapon,rig.head]){
+  part.quaternion.setFromRotationMatrix(new THREE.Matrix4().lookAt(part.position,torsoTarget,new THREE.Vector3(0,1,0)));
+ }
 }
 
 export function riderMuzzle(root){root.updateWorldMatrix(true,true);return root.userData.rig.muzzle.getWorldPosition(new THREE.Vector3());}

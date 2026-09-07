@@ -208,7 +208,8 @@ function laserAim(){
  return {target:nearest,end:nearest?nearest.mesh.position.clone():aim};
 }
 function launchLaser(target,end,homing=false,lane=0){
- const visual=createLaser(homing),position=Math.cos(view.targetYaw)>.999&&Math.cos(view.yaw)>.9?dragonMouth(dragon):riderMuzzle(rider),direction=end.clone().sub(position).normalize();
+ animateRider(rider,end,0);
+ const visual=createLaser(homing),position=riderMuzzle(rider),direction=end.clone().sub(position).normalize();
  if(homing)direction.add(V((lane%2?1:-1)*.28,.16,0)).normalize();
  scene.add(visual.group);
  const laser={visual,target,position,velocity:direction.multiplyScalar(homing?62:70),speed:homing?62:70,damage:homing?7:1,homing,lane,life:6,trail:[position.clone()],length:homing?7:4.5};
@@ -442,18 +443,22 @@ function updateGameplay(dt){
  const route=courseAt(elapsed),basis=updateView(camera,view,route,control,dt);
  const position=basis.center.clone().addScaledVector(basis.right,control.steerX*12);
  position.y=Math.max(3.35,route.y+control.steerY*4.2);player.x=position.x;player.y=position.y;player.z=position.z;
+ const previousPosition=dragon.position.clone();
  dragon.position.lerp(position,1-Math.exp(-dt*4));
  const flightAim=reticleWorldPoint(camera,control,innerWidth,innerHeight);
- const forwardView=Math.cos(view.targetYaw)>.999&&Math.cos(view.yaw)>.9;
- const ahead=courseAt(elapsed+3);
- const dragonAim=forwardView?flightAim:V(ahead.x,ahead.y,-100);
- // Looking sideways/back changes the rider's aim, never the dragon's course.
- if(forwardView)turnTowardAim(dragon,camera,dragonAim,dt);
- else{dragon.userData.aimBank=THREE.MathUtils.damp(dragon.userData.aimBank||0,0,10,dt);const desired=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(dragon.position,dragonAim,V(0,1,0)));dragon.quaternion.slerp(desired,1-Math.exp(-12*dt));}
+ // Include the rail's forward speed in the actual displacement direction.
+ const velocity=dragon.position.clone().sub(previousPosition).divideScalar(Math.max(dt,.0001));
+ velocity.z=Math.min(-8,velocity.z-23);
+ const dragonAim=dragon.position.clone().addScaledVector(velocity,3);
+ const bank=-Math.atan2(velocity.x,23)*.55;
+ dragon.userData.aimBank=THREE.MathUtils.damp(dragon.userData.aimBank||0,bank,8,dt);
+ const desired=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(dragon.position,dragonAim,V(0,1,0)));
+ desired.multiply(new THREE.Quaternion().setFromAxisAngle(V(0,0,1),dragon.userData.aimBank));
+ dragon.quaternion.slerp(desired,1-Math.exp(-10*dt));
  const wingMotion=basis.right.clone().multiplyScalar((control.steerX-previousSteerX)/Math.max(dt*1.65,.0001));
  wingMotion.y=(control.steerY-previousSteerY)/Math.max(dt*1.65,.0001);
  wingMotion.applyQuaternion(dragon.quaternion.clone().invert());
- animateDragon(dragon,t,{bank:dragon.userData.aimBank,breathing:control.shooting&&forwardView,aimTarget:dragonAim,motion:wingMotion,dt});
+ animateDragon(dragon,t,{bank:dragon.userData.aimBank,breathing:false,aimTarget:dragonAim,motion:wingMotion,dt});
  animateRider(rider,flightAim,dt);
  if(control.shooting)shoot();
  dragon.visible=invulnerable<=0||Math.floor(invulnerable*14)%2===0;

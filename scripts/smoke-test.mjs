@@ -63,8 +63,8 @@ g.frame(48);assert.ok(g.state.travel>pausedTravel,'rail advances with no input')
 const center=aimPixels({steerX:0,steerY:0},1440,900);
 press('KeyD');press('KeyW');g.updateGameplay(.1);assert.ok(g.player.x>courseAt(g.state.elapsed).x);assert.ok(g.player.y>courseAt(g.state.elapsed).y);assert.equal(g.control.x,center.x);assert.equal(g.control.y,center.y);mouseMove(center.x+220,center.y-120);g.updateGameplay(.1);
 const route=courseAt(g.state.elapsed),ahead=courseAt(g.state.elapsed+3);
-assert.ok(g.dragon.rotation.y < -Math.atan2(ahead.x-route.x,69),'dragon turns toward rightward aim');
-assert.ok(g.dragon.rotation.x > Math.atan2(ahead.y-route.y,69),'dragon pitches toward upward aim');release('KeyD');release('KeyW');
+assert.ok(g.dragon.rotation.y < -Math.atan2(ahead.x-route.x,69),'dragon turns into rightward movement');
+assert.ok(g.dragon.rotation.x > Math.atan2(ahead.y-route.y,69),'dragon pitches into upward movement');release('KeyD');release('KeyW');
 for(let i=0;i<180;i++)g.updateGameplay(1/60);assert.equal(g.control.x,center.x+220,'movement does not recenter mouse aim');assert.ok(Math.abs(g.player.x-courseAt(g.state.elapsed).x)<.01,'returns to moving rail');
 g.reset();press('KeyJ');press('KeyZ');g.updateGameplay(.1);release('KeyJ');release('KeyZ');assert.equal(g.state.bullets,0);assert.equal(g.state.lasers,0,'old attack keys do nothing');
 press('Space');release('Space');assert.equal(g.state.lasers,0,'SPACE no longer attacks');
@@ -268,4 +268,21 @@ for(const [code,yaw] of [['KeyA',Math.PI/2],['KeyD',-Math.PI/2]]){
 }
 g.reset();press('KeyA');keyTime+=60;release('KeyA');keyTime+=60;press('KeyD');assert.equal(g.state.view.targetYaw,0,'mixed directions do not count');release('KeyD');
 g.reset();press('KeyD');keyTime+=60;release('KeyD');press('Escape');press('Enter');keyTime+=60;press('KeyD');assert.equal(g.state.view.targetYaw,0,'pause clears pending tap');release('KeyD');
+const movementPoses=[];
+for(const aimX of [180,1260]){
+ g.reset();mouseMove(aimX,180);press('KeyD');press('KeyW');
+ for(let i=0;i<30;i++)g.updateGameplay(.01);
+ movementPoses.push(g.dragon.quaternion.clone());
+ const forward=new Three.Vector3(0,0,-1).applyQuaternion(g.dragon.quaternion);
+ assert.ok(forward.x>0&&forward.y>0,'mount faces its right/up movement');
+ const sight=reticleWorldPoint(g.camera,g.control,1440,900),rig=g.rider.userData.rig;
+ for(const part of [rig.head,rig.weapon]){
+  part.updateWorldMatrix(true,true);
+  const facing=new Three.Vector3(0,0,-1).applyQuaternion(part.getWorldQuaternion(new Three.Quaternion()));
+  assert.ok(facing.dot(sight.clone().sub(part.getWorldPosition(new Three.Vector3())).normalize())>.999,'face and gun track aim while mount banks');
+ }
+ mouseDown();mouseUp();assert.ok(g.state.laserFlights[0].position.distanceTo(riderMuzzle(g.rider))<.001,'forward shots also use the gun');
+ release('KeyD');release('KeyW');
+}
+assert.ok(movementPoses[0].angleTo(movementPoses[1])<1e-6,'changing aim cannot turn the mount');
 console.log('PASS: rider swivelling and weapon emission, keyboard start/retry, four-direction attacks, radar, floating warships, turret fire, surface lock/hit/destruction, automatic rail, reticle-facing rotation, flying lasers, pause, segmented midboss, final boss, victory and defeat.');
