@@ -138,13 +138,20 @@ export function createDragon({kind='azure',rider=false,ancient=false,slender=fal
  taper(neck,m.belly,[[0,-.3,0],[0,.01,-.55],[0,.49,-1.22],[0,.62,-1.9]],[.28,.26,.22,.2],10,20);
  for(let i=0;i<6;i++)taper(neck,m.ridge,[[0,.5+i*.12,-i*.28],[0,.95+i*.1,.1-i*.28],[0,1.14+i*.09,.3-i*.28]],[.14,.075,.002],7,7);
  const head=new THREE.Group();head.position.set(0,.9,-1.95);neck.add(head);
- if(ancient){neck.scale.set(1.22,1.5,1);head.scale.set(1.15,.88,1.15);}
+ if(ancient){neck.scale.set(1.22,1.5,1);head.scale.set(.9,.7,.92);}
  oval(head,m.skin,[0,0,0],[.43,.38,.65]);oval(head,m.skin,[0,-.07,-.53],[.34,.24,.53]);oval(head,m.ridge,[0,.08,-.75],[.3,.13,.26]);
  oval(head,m.mouth,[0,-.25,-.47],[.305,.045,.5]);
  const jaw=new THREE.Group();jaw.position.set(0,-.19,-.05);head.add(jaw);oval(jaw,m.skin,[0,-.13,-.45],[.3,.13,.48]);
  for(const s of [-1,1]){
-  oval(head,m.eye,[s*.365,.1,-.32],[.087,.085,.16]);oval(head,m.pupil,[s*.435,.11,-.35],[.018,.065,.035]);
-  taper(head,m.ridge,[[s*.26,.2,-.58],[s*.41,.24,-.3],[s*.4,.22,0]],[.09,.11,.08],8,10);
+  if(ancient){
+   // Narrow, pointed eyes sit beneath a brow that slopes down toward the snout.
+   const eye=add(head,new THREE.OctahedronGeometry(1),m.eye,V(s*.397,.095,-.32),V(.055,.038,.17));eye.rotation.x=-.22;
+   oval(head,m.pupil,[s*.448,.093,-.34],[.009,.027,.017]);
+   taper(head,m.ridge,[[s*.34,.105,-.51],[s*.43,.158,-.3],[s*.39,.21,-.08]],[.045,.055,.045],8,10);
+  }else{
+   oval(head,m.eye,[s*.365,.1,-.32],[.087,.085,.16]);oval(head,m.pupil,[s*.435,.11,-.35],[.018,.065,.035]);
+   taper(head,m.ridge,[[s*.26,.2,-.58],[s*.41,.24,-.3],[s*.4,.22,0]],[.09,.11,.08],8,10);
+  }
   oval(head,m.pupil,[s*.18,.09,-.94],[.055,.035,.065]);
   taper(head,m.horn,[[s*.29,.25,.25],[s*.51,.58,.58],[s*.64,.85,.95],[s*.6,1.13,1.15]],[.19,.14,.08,.002],10,22);
   taper(head,m.horn,[[s*.34,-.01,.2],[s*.65,.06,.55],[s*.81,.3,.8]],[.16,.09,.002],9,14);
