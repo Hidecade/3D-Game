@@ -67,15 +67,6 @@ export function installTouchControls({control,playing,turn,fire,lock,release,can
   });
   for(const event of ['pointercancel','lostpointercapture'])element.addEventListener(event,e=>endPointer(e.pointerId,true));
  }
- for(const [id,code] of [['touch-front','KeyR']]){
-  const button=document.getElementById(id);let lastTouch=-Infinity;
-  // Secondary fingers do not reliably generate click on iOS. Act on touch down.
-  button.addEventListener('pointerdown',e=>{
-   if(e.pointerType!=='touch'||!playing())return;
-   e.preventDefault();e.stopPropagation();lastTouch=Date.now();turn(code);
-  });
-  button.addEventListener('click',e=>{if(e.pointerType!=='touch'&&Date.now()-lastTouch>700&&playing())turn(code);});
- }
  window.addEventListener('pointerup',e=>endPointer(e.pointerId));
  window.addEventListener('pointercancel',e=>endPointer(e.pointerId,true));
  // Safari's address bar changes viewport height without ending the gesture.

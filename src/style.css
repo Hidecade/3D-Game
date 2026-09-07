@@ -22,8 +22,6 @@ body.touch-mode{touch-action:none;-webkit-user-select:none;user-select:none}
 #touch-knob{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;border:1px solid #d6eeccaa;background:#abc8b855}
 #touch-stick span{position:absolute;bottom:8px;width:100%;text-align:center;font-size:10px;opacity:.6}
 #touch-lock{position:absolute;right:max(24px,env(safe-area-inset-right));bottom:max(26px,env(safe-area-inset-bottom));width:80px;height:80px;border:1px solid #ffd1a688;border-radius:50%;background:#483c2bbb;color:#ffe1b4;font-size:15px}
-.touch-view{position:absolute;bottom:max(24px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:6px}
-.touch-view button{min-width:46px;min-height:46px;padding:5px;background:#103746bb;border:1px solid #bfdad855;color:#edf3dc}
 .touch-mode.playing header{height:58px;z-index:5;pointer-events:none;padding:0 max(16px,env(safe-area-inset-right))}
 .touch-mode.playing header button{pointer-events:auto;min-height:44px;min-width:44px}
 .touch-mode.playing .brand,.touch-mode.playing .header-right>.live-dot{display:none}
