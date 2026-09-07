@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { createDragon, animateDragon, dragonMouth } from './dragons.js';
-import { loadPlayerModel } from './imported-dragon.js';
 import { createSkyBeast } from './sky-beasts.js';
 import { createSkyInsect, animateSkyInsect } from './sky-insects.js';
 import { createOcean } from './ocean.js';
@@ -83,7 +82,6 @@ const cavern=createCavern();scene.add(cavern.root);
 const thermalVents=createThermalVents(scene);
 const cavePassages=createCavePassages(scene);
 const dragon=createDragon({referenceStyle:true});scene.add(dragon);
-loadPlayerModel(dragon);
 const rider=createRider();dragon.add(rider);
 
 let mode='title', t=0, elapsed=0, health=100, score=0, kills=0, combo=0, lastKill=-99, waveTimer=2, shotTimer=0, lockTimer=0, invulnerable=0, boss=null, bossSpawned=false, announcementTime=0;
