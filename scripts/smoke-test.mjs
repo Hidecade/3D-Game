@@ -5,6 +5,7 @@ import * as Three from 'three';
 import { createDragon, animateDragon, dragonMouth } from '../src/dragons.js';
 import { createSkyBeast } from '../src/sky-beasts.js';
 import { createSkyInsect, animateSkyInsect } from '../src/sky-insects.js';
+import { createCavePassages } from '../src/cave-passages.js';
 import { createThermalVents } from '../src/thermal-vents.js';
 import { createCavern } from '../src/cavern.js';
 import { createOcean } from '../src/ocean.js';
@@ -27,7 +28,7 @@ const createSoundEffects=()=>({play(name){soundEvents.push(name);},setEnabled(va
 const events=new Map();
 const savedSettings=new Map([['azure-relic-invert-y','true']]);
 const localStorage={getItem:key=>savedSettings.get(key),setItem:(key,value)=>savedSettings.set(key,value)};
-const context=vm.createContext({createThermalVents,createCavern,localStorage,createSkyInsect,animateSkyInsect,createSkyBeast,createDragon,animateDragon,dragonMouth,createOcean,courseAt,stepSteering,aimPixels,reticleWorldPoint,turnTowardAim,VIEW_DIRECTIONS,updateView,radarContact,createCentipede,animateCentipede,createLaser,updateLaser,disposeLaser,createWarship,updateWarship,warshipMuzzle,seaHeight,createRider,animateRider,riderMuzzle,resetRider,createSoundEffects,createMusic,installTouchControls,installUpdatePrompt,THREE:{...Three,WebGLRenderer:Renderer},document:{getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);},createElement:element,body:element(),addEventListener(){}},window:{addEventListener(name,fn){events.set(name,fn);}},innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>0},requestAnimationFrame(){},console});
+const context=vm.createContext({createCavePassages,createThermalVents,createCavern,localStorage,createSkyInsect,animateSkyInsect,createSkyBeast,createDragon,animateDragon,dragonMouth,createOcean,courseAt,stepSteering,aimPixels,reticleWorldPoint,turnTowardAim,VIEW_DIRECTIONS,updateView,radarContact,createCentipede,animateCentipede,createLaser,updateLaser,disposeLaser,createWarship,updateWarship,warshipMuzzle,seaHeight,createRider,animateRider,riderMuzzle,resetRider,createSoundEffects,createMusic,installTouchControls,installUpdatePrompt,THREE:{...Three,WebGLRenderer:Renderer},document:{getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);},createElement:element,body:element(),addEventListener(){}},window:{addEventListener(name,fn){events.set(name,fn);}},innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>0},requestAnimationFrame(){},console});
 const source=fs.readFileSync(new URL('../src/main.js',import.meta.url),'utf8').replace(/^import .*;$/gm,'');
 vm.runInContext(source+`;globalThis.test={reset,pause,frame,createEnemy,spawnWarship,damageEnemy,shoot,releaseLocks,hurt,keys,control,player,screenPos,dragon,rider,locks,enemies,camera,updateGameplay,get state(){return {selectedEpisode,cavern,outdoor,effects,view,radarDots,mode,elapsed,stageTime,midBoss,midBossSpawned,health,score,kills,bossSpawned,boss,bullets:bullets.length,projectiles:bullets,laserFlights:lasers,lasers:lasers.length,travel}},setInvulnerable(n){invulnerable=n}}`,context);
 const g=context.test;assert.equal(g.control.invertY,true,'saved inversion is restored');elements.get('invert-y').onclick();assert.equal(savedSettings.get('azure-relic-invert-y'),'false');assert.equal(soundEnabled,true,'sound is enabled by default');
@@ -315,5 +316,20 @@ elements.get('episode-menu').onclick();elements.get('episode-1').onclick();asser
  assert.equal(hits,0,'flying above the column is safe');
  for(let i=0;i<160;i++)hazards.update(1/60,params);assert.equal(hazards.vents.length,0,'expired vents are removed');
  hazards.reset();hazards.update(.1,{...params,enabled:false});assert.equal(hazards.vents.length,0,'boss fights suppress new vents');
+}
+{
+ const scene=new Three.Scene(),passages=createCavePassages(scene);let collisions=0,warnings=0;
+ const player=new Three.Vector3(0,5,3),params={stageTime:10,routeX:0,player,onHit:()=>collisions++,onWarning:()=>warnings++};
+ passages.update(0,params);assert.equal(passages.passages.length,1);assert.equal(warnings,1);
+ const passage=passages.passages[0];assert.deepEqual(passage.spikes.map(s=>s.label),['left','ceiling','right']);
+ for(const spike of passage.spikes){
+  player.copy(passage.root.position).add(new Three.Vector3(0,5,spike.start.z));
+  const before=collisions;passages.update(0,params);assert.equal(collisions,before,'low center corridor is safe');
+  player.copy(passage.root.position).add(spike.start).addScaledVector(spike.axis,spike.length*.5);
+  passages.update(0,params);assert.equal(collisions,before+1,'contact with each spike damages');
+  passages.update(0,params);assert.equal(collisions,before+1,'one spike does not repeatedly hit');
+ }
+ passages.reset();assert.equal(scene.children.length,0,'retry removes narrow passages');
+ passages.update(0,{...params,enabled:false});assert.equal(passages.passages.length,0,'boss fight blocks passage spawning');
 }
 console.log('PASS: rider swivelling and weapon emission, keyboard start/retry, four-direction attacks, radar, floating warships, turret fire, surface lock/hit/destruction, automatic rail, reticle-facing rotation, flying lasers, pause, segmented midboss, final boss, victory and defeat.');
