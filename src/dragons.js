@@ -5,6 +5,7 @@ const V = (x,y,z) => new THREE.Vector3(x,y,z);
 const palettes = {
  azure: {skin:0x397b7c, belly:0xb5b793, ridge:0x21474e, wing:0x9f634a, horn:0xddd2b0, eye:0x8cffff},
  ivory: {skin:0xd4dedb, belly:0xe9e6d3, ridge:0x182c78, wing:0xb77866, horn:0xe4e2d0, eye:0x7cefff},
+ verdant: {skin:0x6f8072, belly:0x9b9d55, ridge:0x3e5045, wing:0x76b2a0, horn:0x9eaa83, eye:0xd8ee54},
  ember: {skin:0x794132, belly:0xc29365, ridge:0x3b2928, wing:0x823c2e, horn:0xc4ac81, eye:0xffbb42},
  moss: {skin:0x536c43, belly:0xb1ad75, ridge:0x293a32, wing:0x6e7043, horn:0xd3c49b, eye:0xffcd65},
  ancient: {skin:0x343f50, belly:0x898676, ridge:0x202735, wing:0x713d43, horn:0xbeb398, eye:0xff983c},
@@ -31,6 +32,9 @@ function getMaterials(kind){
  vein:new THREE.MeshStandardMaterial({color:p.skin,roughness:.8}),horn:new THREE.MeshStandardMaterial({color:p.horn,roughness:.53}),
  eye:new THREE.MeshStandardMaterial({color:p.eye,emissive:p.eye,emissiveIntensity:1.5,roughness:.2}),
  pupil:new THREE.MeshStandardMaterial({color:0x080e0e,roughness:.3}),mouth:new THREE.MeshStandardMaterial({color:0x30191c,roughness:.85})};
+ if(kind==='verdant'){
+  m.skin.bumpScale=.11;m.wing.map=scaleTexture;m.wing.bumpMap=scaleTexture;m.wing.bumpScale=.025;m.wing.roughness=.72;
+ }
  materialCache.set(kind,m);return m;
 }
 function add(group,geometry,material,pos=V(0,0,0),scale){const obj=new THREE.Mesh(geometry,material);obj.position.copy(pos);if(scale)obj.scale.copy(scale);group.add(obj);return obj;}
@@ -66,7 +70,7 @@ function membrane(group,material,root,boundary){
 }
 
 export function createDragon({kind='azure',rider=false,ancient=false,slender=false,wingSpan=1,wingDepth=1,referenceStyle=false}={}){
- if(referenceStyle)return createIvoryDragon();
+ if(referenceStyle)return createVerdantDragon();
  const root=new THREE.Group();root.name=`${kind}-dragon`;const m=getMaterials(kind);
  const torso=new THREE.Group();root.add(torso);
  oval(torso,m.skin,[0,0,0],[.88,.86,1.8]);oval(torso,m.skin,[0,.13,-.95],[1,.85,1.15]);oval(torso,m.belly,[0,-.4,-.45],[.68,.57,1.55]);
@@ -148,16 +152,15 @@ export function createDragon({kind='azure',rider=false,ancient=false,slender=fal
  root.userData.rig={wings,tail,neck,jaw,scarf,mouth,ancient};return root;
 }
 
-// Rear-view silhouette from the supplied reference: bone-white plated torso,
-// cobalt underbody, pendant legs, salmon membranes and a low trailing blue tail.
-function createIvoryDragon(){
- const root=new THREE.Group();root.name='ivory-blue-dragon';const m=getMaterials('ivory');
+// Reference-inspired grey-green scales, tall armored neck and turquoise membranes.
+function createVerdantDragon(){
+ const root=new THREE.Group();root.name='verdant-crested-dragon';const m=getMaterials('verdant');
  const legs=[];
  const body=new THREE.Group();root.add(body);
  taper(body,m.ridge,[[0,.35,-1.3],[0,.05,-.55],[0,-.12,.35],[0,-.17,1.45]],[.42,.4,.27,.23],14,24);
  oval(body,m.skin,[0,.3,-.93],[.52,.56,.75]);
  for(const s of [-1,1]){
-  // Long overlapping shell plates expose blue seams rather than a round belly.
+  // Overlapping olive belly plates follow the narrow torso.
   for(let i=0;i<5;i++){
    const plate=oval(body,i%2?m.belly:m.skin,[s*(.35-i*.04),.16-i*.09,-.85+i*.44],[.16,.33-i*.026,.4]);
    plate.rotation.z=s*-.4;plate.rotation.x=-.28;
@@ -177,7 +180,7 @@ function createIvoryDragon(){
    bake(joint);joint.position.copy(pivot);root.add(joint);legs.push({joint,side:s,front});
   }
  }
- // Split ivory plates reveal a cobalt spine instead of rounded back bumps.
+ // Layered scales frame the saddle, with a spined crest behind it.
  for(let i=0;i<6;i++){
   const z=-.08+i*.28,y=.3-i*.037,width=.23-i*.018;
   for(const side of [-1,1]){
@@ -186,18 +189,43 @@ function createIvoryDragon(){
   }
   taper(body,m.ridge,[[0,y-.035,z-.11],[0,y+.14-i*.009,z+.04],[0,y+.025,z+.25]],[.065,.045,.002],7,10);
  }
+ for(let i=0;i<4;i++){
+  const z=.2+i*.34;
+  taper(body,m.horn,[[0,.26,z],[0,.78-i*.06,z+.22],[0,.96-i*.1,z+.44]],[.095,.055,.001],8,12);
+  membrane(body,m.wing,[0,.25,z],[[0,.3,z+.1],[0,.9-i*.1,z+.42],[0,.24,z+.57]]);
+ }
  bake(body);
  const neck=new THREE.Group();neck.position.set(0,.45,-1.45);root.add(neck);
- taper(neck,m.skin,[[0,0,.15],[0,.47,-.49],[0,.68,-1.16],[0,.52,-1.8]],[.34,.27,.22,.2],12,25);
- taper(neck,m.ridge,[[0,.25,.05],[0,.7,-.55],[0,.86,-1.2],[0,.68,-1.75]],[.11,.13,.095,.03],9,20);
- const head=new THREE.Group();head.position.set(0,.54,-1.85);neck.add(head);
- oval(head,m.skin,[0,0,0],[.28,.27,.46]);
- taper(head,m.skin,[[0,-.02,-.2],[0,-.08,-.65],[0,-.06,-1.04]],[.23,.17,.025],10,18);
- const jaw=new THREE.Group();jaw.position.set(0,-.16,-.03);head.add(jaw);taper(jaw,m.ridge,[[0,0,0],[0,-.06,-.5],[0,-.01,-.88]],[.15,.12,.015],9,14);
+ taper(neck,m.skin,[[0,0,.15],[0,.65,-.32],[0,1.28,-.7],[0,1.62,-1.4]],[.4,.34,.28,.24],14,32);
+ for(let i=0;i<9;i++){
+  const u=i/8,y=.12+u*1.5,z=-.17-u*1.33;
+  const plate=oval(neck,m.belly,[0,y-.12,z-.15],[.31-u*.085,.14,.2]);plate.rotation.x=-.48;
+  for(const side of [-1,1]){
+   const scale=add(neck,new THREE.OctahedronGeometry(1),m.skin,V(side*(.29-u*.07),y,z+.06),V(.1,.21,.24));scale.rotation.x=-.4;
+  }
+  if(i%2===0){
+   taper(neck,m.horn,[[0,y+.18,z+.2],[0,y+.48,z+.5],[0,y+.64,z+.8]],[.09,.065,.001],8,12);
+   membrane(neck,m.wing,[0,y+.05,z+.18],[[0,y+.17,z+.24],[0,y+.61,z+.78],[0,y+.04,z+.6]]);
+  }
+ }
+ const head=new THREE.Group();head.position.set(0,1.64,-1.47);neck.add(head);
+ oval(head,m.skin,[0,0,0],[.34,.29,.46]);
+ taper(head,m.skin,[[0,-.02,-.2],[0,-.08,-.65],[0,-.06,-.97]],[.29,.23,.13],12,20);
+ oval(head,m.mouth,[0,-.145,-.53],[.2,.055,.39]);
+ const jaw=new THREE.Group();jaw.position.set(0,-.32,-.03);head.add(jaw);taper(jaw,m.skin,[[0,0,0],[0,-.04,-.5],[0,0,-.88]],[.18,.15,.08],10,16);
  for(const s of [-1,1]){
-  oval(head,m.eye,[s*.245,.05,-.17],[.045,.054,.1]);
-  taper(head,m.ridge,[[s*.2,.18,.13],[s*.3,.54,.34],[s*.35,1.03,.58]],[.12,.08,.001],9,15);
-  taper(head,m.horn,[[s*.19,-.04,.12],[s*.43,.03,.39],[s*.56,.17,.57]],[.1,.065,.001],8,12);
+  oval(head,m.eye,[s*.302,.06,-.2],[.045,.062,.095]);
+  oval(head,m.pupil,[s*.34,.065,-.23],[.012,.047,.022]);
+  taper(head,m.ridge,[[s*.24,.18,-.42],[s*.32,.17,-.17],[s*.32,.24,.08]],[.065,.07,.015],8,12);
+  taper(head,m.horn,[[s*.23,.2,.1],[s*.4,.56,.38],[s*.46,1.04,.68]],[.14,.085,.001],10,20);
+  taper(head,m.horn,[[s*.25,.02,.16],[s*.55,.23,.51],[s*.69,.55,.74]],[.11,.065,.001],9,15);
+  membrane(head,m.wing,[s*.2,.13,.15],[[s*.3,.33,.28],[s*.45,.94,.64],[s*.48,.45,.48],[s*.67,.53,.72],[s*.45,.04,.43]]);
+  oval(head,m.pupil,[s*.115,.055,-.86],[.034,.023,.041]);
+  for(let i=0;i<5;i++){
+   const z=-.28-i*.13,x=s*(.19-i*.012);
+   taper(head,m.horn,[[x,-.23,z],[x,-.34-(i%2)*.035,z-.025]],[.035,.001],6,6);
+   taper(jaw,m.horn,[[x,.1,z],[x,.2,z-.02]],[.025,.001],6,6);
+  }
  }
  bake(jaw);bake(head);bake(neck);
  const tail=[];let parent=root;
@@ -205,13 +233,13 @@ function createIvoryDragon(){
   const segment=new THREE.Group();segment.position.set(0,i===0?-.16:0,i===0?1.35:.56);parent.add(segment);
   const radius=.25*Math.pow(1-i/12,1.05);
   taper(segment,i<3&&i%2===0?m.skin:m.ridge,[[0,0,-.04],[0,0,.3],[0,0,.61]],[radius,radius*.92,radius*.8],10,9);
-  if(i<3)taper(segment,m.skin,[[0,.15,.12],[0,.29,.34],[0,.2,.59]],[.16,.13,.025],8,8);
+  if(i<8)taper(segment,m.horn,[[0,radius*.6,.1],[0,radius+.25-i*.02,.37],[0,radius*.6,.58]],[.07,.04,.001],8,10);
   if(i===10)taper(segment,m.ridge,[[0,0,.25],[0,0,.87],[0,.02,1.4]],[.055,.03,.001],8,14);
   bake(segment);tail.push(segment);parent=segment;
  }
  const wings=[];
  for(const s of [-1,1]){
-  const shoulder=new THREE.Group();shoulder.position.set(s*.43,.53,-1.05);root.add(shoulder);
+  const shoulder=new THREE.Group();shoulder.position.set(s*.43,.53,-1.05);shoulder.scale.z=1.3;root.add(shoulder);
   const wrist=[s*2.7,1.05,-.75];
   taper(shoulder,m.ridge,[[0,0,0],[s*1.1,.51,-.52],wrist],[.15,.11,.075],10,18);
   membrane(shoulder,m.wing,[0,0,.7],[[0,0,0],[s*1.1,.51,-.52],wrist,[s*2.17,.36,.6],[s*1.46,-.06,.92],[s*.75,-.14,.35]]);
@@ -221,7 +249,7 @@ function createIvoryDragon(){
   const edge=[[0,0,0],[s*1.27,.03,-.18],[s*3.72,-.34,.12],[s*5.72,-.86,.48],tips[0],[s*5.5,-.66,1.34],tips[1],[s*3.9,-.28,1.1],tips[2],[s*1.67,-.18,.81],tips[3],[0,-.41,.79]];
   membrane(outer,m.wing,[0,0,0],edge);
   taper(outer,m.ridge,[[0,0,0],[s*1.27,.03,-.18],[s*3.72,-.34,.12],[s*5.72,-.86,.48],tips[0]],[.08,.074,.055,.03,.001],9,30);
-  // Clearly drawn blue finger bones divide the broad, pale red membrane.
+  // Scaled finger bones separate the broad turquoise membranes.
   for(let i=1;i<tips.length;i++)taper(outer,m.ridge,[[0,0,0],[tips[i][0]*.48,-.1,tips[i][2]*.36],tips[i]],[.055,.037,.008],7,16);
   for(let i=4;i<edge.length-1;i++)taper(outer,m.ridge,[edge[i],edge[i+1]],[.019,.014],6,5);
   taper(outer,m.ridge,[[0,0,0],[s*.11,.23,-.19],[s*.17,.35,-.43]],[.065,.046,.001],7,10);
@@ -287,7 +315,7 @@ export function animateDragon(root,time,{bank=0,breathing=false,aimTarget=null,m
   rig.neck.rotation.x=THREE.MathUtils.damp(rig.neck.rotation.x,pitch,18,dt);
   rig.neck.rotation.y=THREE.MathUtils.damp(rig.neck.rotation.y,yaw,18,dt);
  }else{rig.neck.rotation.x=Math.sin(phase-.4)*.026;rig.neck.rotation.y=Math.sin(time*.7)*.035;}
- rig.jaw.rotation.x=breathing?.28:.035+Math.sin(time*1.7)*.025;
+ rig.jaw.rotation.x=rig.referenceStyle?-.12+Math.sin(time*1.7)*.025:breathing?.28:.035+Math.sin(time*1.7)*.025;
  if(rig.scarf)rig.scarf.rotation.y=Math.sin(time*7)*.17;
 }
 
