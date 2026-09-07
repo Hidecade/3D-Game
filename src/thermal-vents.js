@@ -27,20 +27,20 @@ export function createThermalVents(scene){
  function reset(){vents.forEach(remove);vents.length=0;next=0;}
  function spawn(x,z){
   const root=new THREE.Group();root.position.set(x,-2,z);scene.add(root);
-  const warningMat=new THREE.MeshBasicMaterial({color:0xff5933,transparent:true,opacity:.7,side:THREE.DoubleSide,depthWrite:false});
+  const warningMat=new THREE.MeshBasicMaterial({color:0xb4ef38,transparent:true,opacity:.7,side:THREE.DoubleSide,depthWrite:false});
   const ring=new THREE.Mesh(new THREE.RingGeometry(2.5,3.4,32),warningMat);ring.rotation.x=-Math.PI/2;ring.position.y=.18;root.add(ring);
   const plume=new THREE.Group();root.add(plume);plume.visible=false;
   const clouds=[];
   for(let i=0;i<28;i++){
-   const cloud=new THREE.Sprite(new THREE.SpriteMaterial({map:steamTexture,color:i%5===0?0xffd7b0:0xe9f1f1,transparent:true,opacity:0,depthWrite:false}));
+   const cloud=new THREE.Sprite(new THREE.SpriteMaterial({map:steamTexture,color:i%5===0?0xd6df48:i%3===0?0x72b34b:0xa6d85b,transparent:true,opacity:0,depthWrite:false}));
    plume.add(cloud);clouds.push(cloud);
   }
   const sprayPositions=new THREE.Float32BufferAttribute(new Float32Array(48*3),3);
   const sprayGeometry=new THREE.BufferGeometry();sprayGeometry.setAttribute('position',sprayPositions);
-  const spray=new THREE.Points(sprayGeometry,new THREE.PointsMaterial({color:0xe0f5fa,size:.16,transparent:true,opacity:.75,depthWrite:false}));spray.frustumCulled=false;plume.add(spray);
+  const spray=new THREE.Points(sprayGeometry,new THREE.PointsMaterial({color:0xc3e788,size:.16,transparent:true,opacity:.75,depthWrite:false}));spray.frustumCulled=false;plume.add(spray);
   const ripples=[];
   for(let i=0;i<2;i++){
-   const ripple=new THREE.Mesh(new THREE.RingGeometry(.92,1,48),new THREE.MeshBasicMaterial({color:0xc5e6e8,transparent:true,opacity:.3,side:THREE.DoubleSide,depthWrite:false}));
+   const ripple=new THREE.Mesh(new THREE.RingGeometry(.92,1,48),new THREE.MeshBasicMaterial({color:0x9bd365,transparent:true,opacity:.3,side:THREE.DoubleSide,depthWrite:false}));
    ripple.rotation.x=-Math.PI/2;ripple.position.y=.22+i*.03;plume.add(ripple);ripples.push(ripple);
   }
   vents.push({root,ring,plume,clouds,sprayPositions,ripples,age:0,hit:false,erupted:false,height:0});
