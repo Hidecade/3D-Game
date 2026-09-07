@@ -259,4 +259,13 @@ for(const touch of [false,true]){
 assert.equal(g.control.x,unchangedAim.x);assert.equal(g.control.y,unchangedAim.y,'toggle preserves aim');
 g.reset();assert.equal(g.control.invertY,true,'retry retains inversion');
 localStorage.setItem=()=>{throw new Error('storage unavailable');};elements.get('invert-y').onclick();assert.equal(g.control.invertY,false,'toggle works without storage');
+let keyTime=1000;context.Date={now:()=>keyTime};
+for(const [code,yaw] of [['KeyA',Math.PI/2],['KeyD',-Math.PI/2]]){
+ g.reset();press(code);keyTime+=70;release(code);keyTime+=100;press(code);
+ assert.equal(g.state.view.targetYaw,yaw,'double movement key turns 90 degrees');
+ events.get('keydown')({code,repeat:true,preventDefault(){}});assert.equal(g.state.view.targetYaw,yaw,'auto-repeat does not turn again');
+ release(code);g.reset();press(code);keyTime+=500;release(code);keyTime+=60;press(code);assert.equal(g.state.view.targetYaw,0,'long press remains movement');release(code);
+}
+g.reset();press('KeyA');keyTime+=60;release('KeyA');keyTime+=60;press('KeyD');assert.equal(g.state.view.targetYaw,0,'mixed directions do not count');release('KeyD');
+g.reset();press('KeyD');keyTime+=60;release('KeyD');press('Escape');press('Enter');keyTime+=60;press('KeyD');assert.equal(g.state.view.targetYaw,0,'pause clears pending tap');release('KeyD');
 console.log('PASS: rider swivelling and weapon emission, keyboard start/retry, four-direction attacks, radar, floating warships, turret fire, surface lock/hit/destruction, automatic rail, reticle-facing rotation, flying lasers, pause, segmented midboss, final boss, victory and defeat.');

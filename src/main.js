@@ -271,10 +271,10 @@ function reset(){
  for(const e of enemies){e.marker?.remove();disposeGroup(e.mesh);}enemies.length=0;
  if(midBoss)disposeGroup(midBoss.model);midBoss=null;midBossSpawned=false;stageTime=0;
  for(const b of bullets)disposeGroup(b.mesh);bullets.length=0;for(const e of effects)disposeGroup(e.mesh);effects.length=0;
- clearLocks();keys.clear();control.shooting=false;$('flash').style.opacity=0;t=elapsed=travel=0;seaMaterial.uniforms.travel.value=0;control.steerX=control.steerY=0;Object.assign(control,aimPixels(control,innerWidth,innerHeight));health=100;score=kills=combo=0;lastKill=-99;waveTimer=2;shotTimer=lockTimer=invulnerable=0;boss=null;bossSpawned=false;player.x=0;player.y=7;dragon.position.set(0,7,3);dragon.rotation.set(0,0,0);dragon.userData.aimBank=0;dragon.userData.rig.neck.rotation.set(0,0,0);camera.position.set(0,12,24);camera.lookAt(0,12,-100);camera.updateMatrixWorld();
+ clearLocks();keys.clear();clearMovementTap();control.shooting=false;$('flash').style.opacity=0;t=elapsed=travel=0;seaMaterial.uniforms.travel.value=0;control.steerX=control.steerY=0;Object.assign(control,aimPixels(control,innerWidth,innerHeight));health=100;score=kills=combo=0;lastKill=-99;waveTimer=2;shotTimer=lockTimer=invulnerable=0;boss=null;bossSpawned=false;player.x=0;player.y=7;dragon.position.set(0,7,3);dragon.rotation.set(0,0,0);dragon.userData.aimBank=0;dragon.userData.rig.neck.rotation.set(0,0,0);camera.position.set(0,12,24);camera.lookAt(0,12,-100);camera.updateMatrixWorld();
  $('health').style.width='100%';$('hp-label').textContent='100%';$('score').textContent='000000';$('combo').textContent='READY TO ENGAGE';$('boss-bar').hidden=true;$('boss-health').style.width='100%';$('overlay').hidden=true;$('title').hidden=true;$('location').hidden=true;$('footer').hidden=true;$('hud').hidden=false;document.body.classList.add('playing');mode='playing';announce('EPISODE 01  /  水没した聖域',5);
 }
-function pause(){if(mode==='playing'){touch.reset();music.pause();se.setSuspended(true);mode='paused';control.shooting=false;clearLocks();keys.clear();$('overlay').hidden=false;$('result-label').textContent='FLIGHT PAUSED';$('result-title').textContent='飛行を一時停止';$('result-copy').textContent='翼を休めて、再び空へ。';$('resume').hidden=false;}else if(mode==='paused'){music.start();se.setSuspended(false);void se.unlock();mode='playing';$('overlay').hidden=true;}}
+function pause(){if(mode==='playing'){touch.reset();music.pause();se.setSuspended(true);mode='paused';control.shooting=false;clearLocks();keys.clear();clearMovementTap();$('overlay').hidden=false;$('result-label').textContent='FLIGHT PAUSED';$('result-title').textContent='飛行を一時停止';$('result-copy').textContent='翼を休めて、再び空へ。';$('resume').hidden=false;}else if(mode==='paused'){music.start();se.setSuspended(false);void se.unlock();mode='playing';$('overlay').hidden=true;}}
 function finish(win){if(win&&mode!=='victory'){beginVictory();return;}touch.reset();music.pause();invulnerable=0;$('flash').style.opacity=0;if(win){$('progress').style.width='100%';$('distance').textContent='100%';}mode=win?'win':'lose';control.shooting=false;clearLocks();$('overlay').hidden=false;$('result-label').textContent=win?'EPISODE COMPLETE':'FLIGHT LOST';$('result-title').textContent=win?'聖域に、静寂を。':'翼は、まだ折れていない。';$('result-copy').textContent=`${win?'守護者を撃破。蒼い空は、再びあなたのものに。':'もう一度、竜とともに聖域へ。'}\nSCORE  ${String(score).padStart(6,'0')}   /   撃破 ${kills}   /   ${Math.floor(elapsed)} 秒`;$('resume').hidden=true;document.body.classList.remove('playing');}
 let victoryTime=0,bossCrash=null;
 function beginBossCrash(enemy){
@@ -344,7 +344,7 @@ function updateBossCrash(dt){
  }
 }
 function beginVictory(){
- mode='victory';victoryTime=0;touch.reset();keys.clear();control.shooting=false;clearLocks();invulnerable=0;dragon.visible=true;
+ mode='victory';victoryTime=0;touch.reset();keys.clear();clearMovementTap();control.shooting=false;clearLocks();invulnerable=0;dragon.visible=true;
  $('flash').style.opacity=0;$('overlay').hidden=true;$('hud').hidden=true;
  document.body.classList.remove('playing');document.body.classList.add('ending');
  for(const bullet of bullets)disposeGroup(bullet.mesh);bullets.length=0;
@@ -363,6 +363,8 @@ function updateVictory(dt){
 }
 $('start').onclick=()=>{reset();if(soundOn)tone(330,.7);};$('restart').onclick=reset;$('resume').onclick=pause;$('pause').onclick=pause;
 $('sound').onclick=()=>{soundOn=!soundOn;music.setEnabled(soundOn);se.setEnabled(soundOn);if(soundOn)void se.unlock();$('sound').textContent=soundOn?'SOUND ON':'SOUND OFF';if(soundOn)tone(440,.2);};
+let movementTap={code:null,upAt:-Infinity,downCode:null,downAt:null};
+function clearMovementTap(){movementTap={code:null,upAt:-Infinity,downCode:null,downAt:null};}
 function handleKeyDown(e){
  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter'].includes(e.code))e.preventDefault();
  if(e.repeat&&['Enter','Escape','KeyM','KeyR'].includes(e.code))return;
@@ -373,6 +375,15 @@ function handleKeyDown(e){
  if(e.code==='Escape'){pause();return;}
  if(e.code==='KeyM'){$('sound').onclick();return;}
  if(mode!=='playing')return;
+ if((e.code==='KeyA'||e.code==='KeyD')&&!e.repeat&&!keys.has(e.code)){
+  const now=Date.now(),opposite=e.code==='KeyA'?'KeyD':'KeyA';
+  if(keys.has(opposite))clearMovementTap();
+  else{
+   const twice=movementTap.code===e.code&&now-movementTap.upAt<=320;
+   clearMovementTap();movementTap.downCode=e.code;movementTap.downAt=twice?null:now;
+   if(twice)handleKeyDown({code:e.code==='KeyA'?'KeyQ':'KeyE',repeat:false,preventDefault(){}});
+  }
+ }
  if(soundOn&&audioContext?.state!=='running')void se.unlock();
  const direction=e.code==='KeyR'?{yaw:Math.round(view.yaw/(Math.PI*2))*Math.PI*2-view.targetYaw}:VIEW_DIRECTIONS[e.code];
  if(direction){
@@ -386,7 +397,15 @@ function handleKeyDown(e){
  }
  keys.add(e.code);
 }
-function handleKeyUp(e){keys.delete(e.code);}
+function handleKeyUp(e){
+ if(keys.has(e.code)&&movementTap.downCode===e.code){
+  const now=Date.now();
+  if(mode==='playing'&&movementTap.downAt!==null&&now-movementTap.downAt<=220){movementTap.code=e.code;movementTap.upAt=now;}
+  else{movementTap.code=null;movementTap.upAt=-Infinity;}
+  movementTap.downCode=null;movementTap.downAt=null;
+ }
+ keys.delete(e.code);
+}
 function moveAim(e){
  if(mode!=='playing'||e.pointerType==='touch')return;
  control.x=THREE.MathUtils.clamp(e.clientX,12,innerWidth-12);
