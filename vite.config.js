@@ -5,6 +5,7 @@ const buildId=process.env.GITHUB_SHA||`local-${Date.now()}`;
 export default {
  base:'./',
  publicDir:false,
+ build:{rollupOptions:{input:{game:'index.html',gallery:'gallery.html'}}},
  define:{__BUILD_ID__:JSON.stringify(buildId)},
  // The running bundle and version endpoint always describe the same build.
  plugins:[{

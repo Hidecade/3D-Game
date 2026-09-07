@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0e2330"><title>GALLERY — AZURE RELIC</title><link rel="stylesheet" href="/src/gallery.css"></head>
+<body>
+<header><div><small>AZURE RELIC</small><h1>CREATURE GALLERY</h1></div><a href="./">ゲームへ戻る ↗</a></header>
+<main>
+ <section class="viewer" aria-label="360度モデルビューアー"><canvas id="gallery-canvas" aria-label="ドラッグでモデルを回転、ホイールまたはピンチで拡大縮小"></canvas><div class="view-caption">360° VIEW<span>ドラッグで回転 ／ ホイール・ピンチで拡大</span></div></section>
+ <aside>
+  <label for="model-select">登場キャラクター</label><select id="model-select"></select>
+  <p class="counter" id="model-counter"></p><h2 id="model-name"></h2><p id="model-description"></p>
+  <div class="model-nav"><button id="previous-model" aria-label="前のキャラクター">← 前へ</button><button id="next-model" aria-label="次のキャラクター">次へ →</button></div>
+  <div class="settings"><button id="auto-rotate" aria-pressed="true">自動回転 ON</button><button id="reset-view">視点を戻す</button></div>
+  <label for="zoom">拡大率</label><input id="zoom" type="range" min="0.55" max="2.5" step="0.01" value="1">
+  <p class="hint">iPhoneは1本指で回転、2本指で拡大縮小。真横や背面、上や下からも観察できます。</p>
+ </aside>
+</main>
+<script type="module" src="/src/gallery.js"></script>
+</body></html>
