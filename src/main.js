@@ -3,6 +3,7 @@ import { createDragon, animateDragon, dragonMouth } from './dragons.js';
 import { createSkyBeast } from './sky-beasts.js';
 import { createSkyInsect, animateSkyInsect } from './sky-insects.js';
 import { createOcean } from './ocean.js';
+import { createCavern } from './cavern.js';
 import { courseAt, stepSteering, aimPixels, reticleWorldPoint, turnTowardAim, VIEW_DIRECTIONS, updateView, radarContact } from './flight.js';
 import { createCentipede, animateCentipede } from './centipede.js';
 import { createLaser, updateLaser, disposeLaser } from './lasers.js';
@@ -26,7 +27,7 @@ scene.background = new THREE.Color('#99c8cc');
 scene.fog = new THREE.FogExp2('#9ac5c5', .0039);
 const camera = new THREE.PerspectiveCamera(56, innerWidth / innerHeight, .1, 1500);
 camera.position.set(0, 12, 24); camera.lookAt(0, 12, -100);
-scene.add(new THREE.HemisphereLight('#e7f2e4', '#24515a', 2.7));
+const ambient=new THREE.HemisphereLight('#e7f2e4', '#24515a', 2.7);scene.add(ambient);
 const sun = new THREE.DirectionalLight('#fff0cb', 3.2); sun.position.set(-90, 150, -180); scene.add(sun);
 const materials = {};
 function mat(color, extra={}) { const key=color+JSON.stringify(extra); return materials[key] ||= new THREE.MeshStandardMaterial({color, roughness:.83,...extra}); }
@@ -74,11 +75,26 @@ for(let i=0;i<34;i++){
 }
 
 // Articulated player dragon.
+const outdoor=scene.children.filter(o=>!o.isLight&&o!==ocean);
+const cavern=createCavern();scene.add(cavern.root);
 const dragon=createDragon({referenceStyle:true});scene.add(dragon);
 const rider=createRider();dragon.add(rider);
 
 let mode='title', t=0, elapsed=0, health=100, score=0, kills=0, combo=0, lastKill=-99, waveTimer=2, shotTimer=0, lockTimer=0, invulnerable=0, boss=null, bossSpawned=false, announcementTime=0;
 let stageTime=0,midBoss=null,midBossSpawned=false;
+let selectedEpisode=1;
+function selectEpisode(number){
+ if(mode!=='title')return;
+ selectedEpisode=number;const cave=number===2;
+ cavern.root.visible=cave;for(const object of outdoor)object.visible=!cave;
+ scene.background.set(cave?'#101d30':'#99c8cc');scene.fog.color.set(cave?'#142737':'#9ac5c5');scene.fog.density=cave?.008:.0039;
+ ambient.color.set(cave?'#8bafc7':'#e7f2e4');ambient.groundColor.set(cave?'#233448':'#24515a');ambient.intensity=cave?2:2.7;
+ sun.color.set(cave?'#9bdce8':'#fff0cb');sun.intensity=cave?1.8:3.2;
+ $('episode-1').ariaPressed=String(!cave);$('episode-2').ariaPressed=String(cave);
+ $('episode-label').textContent=cave?'EPISODE 02 / THE CRYSTAL CAVERN':'EPISODE 01 / THE SUNKEN SANCTUARY';
+ $('episode-copy').textContent=cave?'蒼く輝く結晶。闇に潜む、古代の守護者。\n竜とともに、地底湖の奥へ。':'海に沈んだ文明。空に残された、最後の翼。\n竜とともに、忘れられた聖域へ。';
+ $('location').hidden=cave;
+}
 const lasers=[];
 const enemies=[], bullets=[], effects=[], locks=new Set(), keys=new Set();
 const control={x:innerWidth*.5,y:innerHeight*.48,steerX:0,steerY:0,shooting:false,locking:false};
@@ -116,8 +132,8 @@ function createEnemy(x,y,z,isBoss=false,approach='front',insect=false){
 function spawnAmbush(){
  const side=['rear','left','right'][ambushWave++%3],route=courseAt(elapsed);
  for(let i=0;i<3;i++){
-  if(side==='rear')createEnemy(route.x+(i-1)*10,9+i*2,112+i*12,false,'rear',i===1);
-  else createEnemy(route.x+(side==='left'?-1:1)*(60+i*12),9+i*2,3+(i-1)*13,false,side,i===1);
+  if(side==='rear')createEnemy(route.x+(i-1)*10,9+i*2,112+i*12,false,'rear',selectedEpisode===2||i===1);
+  else createEnemy(route.x+(side==='left'?-1:1)*(60+i*12),9+i*2,3+(i-1)*13,false,side,selectedEpisode===2||i===1);
  }
  announce(side==='rear'?'後方から敵接近 / Q / E で旋回':side==='left'?'左側から敵接近 / レーダーを確認':'右側から敵接近 / レーダーを確認',4);
 }
@@ -273,10 +289,10 @@ function reset(){
  if(midBoss)disposeGroup(midBoss.model);midBoss=null;midBossSpawned=false;stageTime=0;
  for(const b of bullets)disposeGroup(b.mesh);bullets.length=0;for(const e of effects)disposeGroup(e.mesh);effects.length=0;
  clearLocks();keys.clear();clearMovementTap();control.shooting=false;$('flash').style.opacity=0;t=elapsed=travel=0;seaMaterial.uniforms.travel.value=0;control.steerX=control.steerY=0;Object.assign(control,aimPixels(control,innerWidth,innerHeight));health=100;score=kills=combo=0;lastKill=-99;waveTimer=2;shotTimer=lockTimer=invulnerable=0;boss=null;bossSpawned=false;player.x=0;player.y=7;dragon.position.set(0,7,3);dragon.rotation.set(0,0,0);dragon.userData.aimBank=0;dragon.userData.rig.neck.rotation.set(0,0,0);camera.position.set(0,12,24);camera.lookAt(0,12,-100);camera.updateMatrixWorld();
- $('health').style.width='100%';$('hp-label').textContent='100%';$('score').textContent='000000';$('combo').textContent='READY TO ENGAGE';$('boss-bar').hidden=true;$('boss-health').style.width='100%';$('overlay').hidden=true;$('title').hidden=true;$('location').hidden=true;$('footer').hidden=true;$('hud').hidden=false;document.body.classList.add('playing');mode='playing';announce('EPISODE 01  /  水没した聖域',5);
+ $('health').style.width='100%';$('hp-label').textContent='100%';$('score').textContent='000000';$('combo').textContent='READY TO ENGAGE';$('boss-bar').hidden=true;$('boss-health').style.width='100%';$('overlay').hidden=true;$('title').hidden=true;$('location').hidden=true;$('footer').hidden=true;$('hud').hidden=false;document.body.classList.add('playing');mode='playing';announce($('episode-label').textContent,5);
 }
 function pause(){if(mode==='playing'){touch.reset();music.pause();se.setSuspended(true);mode='paused';control.shooting=false;clearLocks();keys.clear();clearMovementTap();$('overlay').hidden=false;$('result-label').textContent='FLIGHT PAUSED';$('result-title').textContent='飛行を一時停止';$('result-copy').textContent='翼を休めて、再び空へ。';$('resume').hidden=false;}else if(mode==='paused'){music.start();se.setSuspended(false);void se.unlock();mode='playing';$('overlay').hidden=true;}}
-function finish(win){if(win&&mode!=='victory'){beginVictory();return;}touch.reset();music.pause();invulnerable=0;$('flash').style.opacity=0;if(win){$('progress').style.width='100%';$('distance').textContent='100%';}mode=win?'win':'lose';control.shooting=false;clearLocks();$('overlay').hidden=false;$('result-label').textContent=win?'EPISODE COMPLETE':'FLIGHT LOST';$('result-title').textContent=win?'聖域に、静寂を。':'翼は、まだ折れていない。';$('result-copy').textContent=`${win?'守護者を撃破。蒼い空は、再びあなたのものに。':'もう一度、竜とともに聖域へ。'}\nSCORE  ${String(score).padStart(6,'0')}   /   撃破 ${kills}   /   ${Math.floor(elapsed)} 秒`;$('resume').hidden=true;document.body.classList.remove('playing');}
+function finish(win){if(win&&mode!=='victory'){beginVictory();return;}touch.reset();music.pause();invulnerable=0;$('flash').style.opacity=0;if(win){$('progress').style.width='100%';$('distance').textContent='100%';}mode=win?'win':'lose';control.shooting=false;clearLocks();$('overlay').hidden=false;$('result-label').textContent=win?`EPISODE ${String(selectedEpisode).padStart(2,'0')} COMPLETE`:'FLIGHT LOST';$('result-title').textContent=win?'聖域に、静寂を。':'翼は、まだ折れていない。';$('result-copy').textContent=`${win?'守護者を撃破。蒼い空は、再びあなたのものに。':'もう一度、竜とともに聖域へ。'}\nSCORE  ${String(score).padStart(6,'0')}   /   撃破 ${kills}   /   ${Math.floor(elapsed)} 秒`;$('resume').hidden=true;document.body.classList.remove('playing');}
 let victoryTime=0,bossCrash=null;
 function beginBossCrash(enemy){
  beginVictory();mode='boss-crash';
@@ -349,12 +365,12 @@ function beginVictory(){
  $('flash').style.opacity=0;$('overlay').hidden=true;$('hud').hidden=true;
  document.body.classList.remove('playing');document.body.classList.add('ending');
  for(const bullet of bullets)disposeGroup(bullet.mesh);bullets.length=0;
- camera.position.copy(dragon.position).add(V(0,5,21));camera.lookAt(dragon.position.clone().add(V(0,3,-50)));camera.updateMatrixWorld();
+ camera.position.copy(dragon.position).add(V(0,selectedEpisode===2?10:5,21));camera.lookAt(dragon.position.clone().add(V(0,selectedEpisode===2?0:3,-50)));camera.updateMatrixWorld();
 }
 function updateVictory(dt){
  if(document.hidden)return;
  victoryTime+=dt;t+=dt;seaMaterial.uniforms.time.value=t;
- const velocity=V(4+victoryTime*9,2+victoryTime*12,-8-victoryTime*9);
+ const velocity=V(4+victoryTime*9,selectedEpisode===2?3+victoryTime*6:2+victoryTime*12,-8-victoryTime*9);
  dragon.position.addScaledVector(velocity,dt);
  const destination=dragon.position.clone().add(velocity.clone().multiplyScalar(5));
  turnTowardAim(dragon,camera,destination,dt);
@@ -362,6 +378,8 @@ function updateVictory(dt){
  animateRider(rider,destination,dt);updateHomingLasers(dt);
  if(victoryTime>=4){dragon.visible=false;finish(true);}
 }
+$('episode-1').onclick=()=>selectEpisode(1);$('episode-2').onclick=()=>selectEpisode(2);
+$('episode-menu').onclick=()=>{reset();mode='title';music.pause();se.setSuspended(true);document.body.classList.remove('playing','ending');$('overlay').hidden=true;$('hud').hidden=true;$('title').hidden=false;$('footer').hidden=false;selectEpisode(selectedEpisode);};
 $('start').onclick=()=>{reset();if(soundOn)tone(330,.7);};$('restart').onclick=reset;$('resume').onclick=pause;$('pause').onclick=pause;
 $('sound').onclick=()=>{soundOn=!soundOn;music.setEnabled(soundOn);se.setEnabled(soundOn);if(soundOn)void se.unlock();$('sound').textContent=soundOn?'SOUND ON':'SOUND OFF';if(soundOn)tone(440,.2);};
 let movementTap={code:null,upAt:-Infinity,downCode:null,downAt:null};
@@ -465,12 +483,12 @@ function updateGameplay(dt){
  $('reticle').style.left=`${control.x}px`;$('reticle').style.top=`${control.y}px`;$('reticle').classList.toggle('locking',control.locking);
  if(stageTime>=32&&!midBossSpawned)spawnMidBoss();
  updateMidBoss(dt);
- if((!midBoss||midBoss.dead)&&stageTime<66){
+ if(selectedEpisode===1&&(!midBoss||midBoss.dead)&&stageTime<66){
   shipTimer-=dt;if(shipTimer<=0){const side=shipWave++%2?1:-1;spawnWarship(route.x+side*22,-140);if(shipWave===1){spawnWarship(route.x+25,-190);announce('旧時代の小型戦艦 / 水面の砲台を撃破',4);}shipTimer=19;}
  }
  if((!midBoss||midBoss.dead)&&stageTime<66){ambushTimer-=dt;if(ambushTimer<=0){spawnAmbush();ambushTimer=14;}}
  if(!midBoss||midBoss.dead)waveTimer-=dt;
- if(stageTime<66&&waveTimer<=0&&(!midBoss||midBoss.dead)){const wave=Math.floor(stageTime/6);const count=3+Math.min(3,Math.floor(stageTime/20));for(let j=0;j<count;j++)createEnemy((j-(count-1)/2)*9+Math.sin(wave)*8,9+Math.sin(j*1.7+wave)*6,-125-j*10,false,'front',j%3===1);waveTimer=6; if(wave===3)announce('右クリック長押しで捕捉 → 離してホーミングレーザー');}
+ if(stageTime<66&&waveTimer<=0&&(!midBoss||midBoss.dead)){const wave=Math.floor(stageTime/6);const count=3+Math.min(3,Math.floor(stageTime/20));for(let j=0;j<count;j++)createEnemy((j-(count-1)/2)*9+Math.sin(wave)*8,9+Math.sin(j*1.7+wave)*6,-125-j*10,false,'front',(selectedEpisode===2?j%3!==0:j%3===1));waveTimer=6; if(wave===3)announce('右クリック長押しで捕捉 → 離してホーミングレーザー');}
  if(stageTime>=70&&!bossSpawned){bossSpawned=true;music.start(true,'boss');boss=createEnemy(0,17,-155,true);$('boss-bar').hidden=false;$('boss-name').textContent='ANCIENT DRAGON / 古竜アシュガル';$('boss-health').style.width='100%';announce('WARNING  /  聖域の守護者 接近',5);se.play('bossWarning');}
  const progress=Math.min(100,Math.min(stageTime/70,1)*80+(boss?((boss.maxHp-boss.hp)/boss.maxHp)*20:0));$('distance').textContent=`${Math.floor(progress)}%`;$('progress').style.width=`${progress}%`;
  for(const e of enemies){
@@ -512,13 +530,14 @@ function updateGameplay(dt){
  for(let i=enemies.length-1;i>=0;i--)if(enemies[i].dead&&enemies[i]!==bossCrash?.enemy){disposeGroup(enemies[i].mesh);enemies.splice(i,1);}
  renderRadar();
 }
+selectEpisode(1);
 let previous=performance.now();
 function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous)/1000,.04);previous=now;
  if(mode==='boss-crash')updateBossCrash(dt);
  else if(mode==='victory')updateVictory(dt);
  if(mode==='title'||mode==='playing'){
   t+=dt;seaMaterial.uniforms.time.value=t;
-  const speed=mode==='title'?4:23;travel+=dt*speed;seaMaterial.uniforms.travel.value=travel;
+  const speed=mode==='title'?4:23;travel+=dt*speed;seaMaterial.uniforms.travel.value=travel;if(selectedEpisode===2)cavern.update(travel);
   for(const r of ruins){r.position.z+=dt*speed;if(r.position.z>600)r.position.z-=2100;}
   if(mode==='title'){dragon.visible=true;dragon.position.set(6.7+Math.sin(t*.25)*.6,7.8+Math.sin(t*1.3)*.4,-1);dragon.rotation.set(0,0,Math.sin(t*.8)*.025);camera.position.set(0,12,24);camera.lookAt(0,12,-100);animateDragon(dragon,t);}
   else updateGameplay(dt);

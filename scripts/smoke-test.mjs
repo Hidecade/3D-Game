@@ -5,6 +5,7 @@ import * as Three from 'three';
 import { createDragon, animateDragon, dragonMouth } from '../src/dragons.js';
 import { createSkyBeast } from '../src/sky-beasts.js';
 import { createSkyInsect, animateSkyInsect } from '../src/sky-insects.js';
+import { createCavern } from '../src/cavern.js';
 import { createOcean } from '../src/ocean.js';
 import { courseAt, stepSteering, aimPixels, reticleWorldPoint, turnTowardAim, VIEW_DIRECTIONS, updateView, radarContact } from '../src/flight.js';
 import { createCentipede, animateCentipede } from '../src/centipede.js';
@@ -25,9 +26,9 @@ const createSoundEffects=()=>({play(name){soundEvents.push(name);},setEnabled(va
 const events=new Map();
 const savedSettings=new Map([['azure-relic-invert-y','true']]);
 const localStorage={getItem:key=>savedSettings.get(key),setItem:(key,value)=>savedSettings.set(key,value)};
-const context=vm.createContext({localStorage,createSkyInsect,animateSkyInsect,createSkyBeast,createDragon,animateDragon,dragonMouth,createOcean,courseAt,stepSteering,aimPixels,reticleWorldPoint,turnTowardAim,VIEW_DIRECTIONS,updateView,radarContact,createCentipede,animateCentipede,createLaser,updateLaser,disposeLaser,createWarship,updateWarship,warshipMuzzle,seaHeight,createRider,animateRider,riderMuzzle,resetRider,createSoundEffects,createMusic,installTouchControls,installUpdatePrompt,THREE:{...Three,WebGLRenderer:Renderer},document:{getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);},createElement:element,body:element(),addEventListener(){}},window:{addEventListener(name,fn){events.set(name,fn);}},innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>0},requestAnimationFrame(){},console});
+const context=vm.createContext({createCavern,localStorage,createSkyInsect,animateSkyInsect,createSkyBeast,createDragon,animateDragon,dragonMouth,createOcean,courseAt,stepSteering,aimPixels,reticleWorldPoint,turnTowardAim,VIEW_DIRECTIONS,updateView,radarContact,createCentipede,animateCentipede,createLaser,updateLaser,disposeLaser,createWarship,updateWarship,warshipMuzzle,seaHeight,createRider,animateRider,riderMuzzle,resetRider,createSoundEffects,createMusic,installTouchControls,installUpdatePrompt,THREE:{...Three,WebGLRenderer:Renderer},document:{getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);},createElement:element,body:element(),addEventListener(){}},window:{addEventListener(name,fn){events.set(name,fn);}},innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>0},requestAnimationFrame(){},console});
 const source=fs.readFileSync(new URL('../src/main.js',import.meta.url),'utf8').replace(/^import .*;$/gm,'');
-vm.runInContext(source+`;globalThis.test={reset,pause,frame,createEnemy,spawnWarship,damageEnemy,shoot,releaseLocks,hurt,keys,control,player,screenPos,dragon,rider,locks,enemies,camera,updateGameplay,get state(){return {effects,view,radarDots,mode,elapsed,stageTime,midBoss,midBossSpawned,health,score,kills,bossSpawned,boss,bullets:bullets.length,projectiles:bullets,laserFlights:lasers,lasers:lasers.length,travel}},setInvulnerable(n){invulnerable=n}}`,context);
+vm.runInContext(source+`;globalThis.test={reset,pause,frame,createEnemy,spawnWarship,damageEnemy,shoot,releaseLocks,hurt,keys,control,player,screenPos,dragon,rider,locks,enemies,camera,updateGameplay,get state(){return {selectedEpisode,cavern,outdoor,effects,view,radarDots,mode,elapsed,stageTime,midBoss,midBossSpawned,health,score,kills,bossSpawned,boss,bullets:bullets.length,projectiles:bullets,laserFlights:lasers,lasers:lasers.length,travel}},setInvulnerable(n){invulnerable=n}}`,context);
 const g=context.test;assert.equal(g.control.invertY,true,'saved inversion is restored');elements.get('invert-y').onclick();assert.equal(savedSettings.get('azure-relic-invert-y'),'false');assert.equal(soundEnabled,true,'sound is enabled by default');
 // Steering visibly strengthens the stroke, mirrors the wing lean, and settles.
 {
@@ -285,4 +286,16 @@ for(const aimX of [180,1260]){
  release('KeyD');release('KeyW');
 }
 assert.ok(movementPoses[0].angleTo(movementPoses[1])<1e-6,'changing aim cannot turn the mount');
+elements.get('episode-menu').onclick();assert.equal(g.state.mode,'title');
+elements.get('episode-2').onclick();assert.equal(g.state.selectedEpisode,2);assert.equal(g.state.cavern.root.visible,true);assert.ok(g.state.outdoor.every(o=>!o.visible),'outdoor scenery is hidden in cave');
+press('Enter');g.setInvulnerable(1000);
+for(let i=0;i<2040;i++)g.updateGameplay(1/60);
+assert.equal(g.state.selectedEpisode,2);assert.equal(g.enemies.some(e=>e.warship),false,'cave has no sea patrol boats');assert.ok(g.enemies.some(e=>e.insect));assert.ok(g.state.midBoss);
+g.damageEnemy(g.state.midBoss.targets[0],300);
+for(let i=0;i<2400;i++)g.updateGameplay(1/60);
+assert.ok(g.state.bossSpawned);g.damageEnemy(g.state.boss,300);
+for(let i=0;i<300&&g.state.mode!=='win';i++)g.frame(200000+i*40);
+assert.equal(g.state.mode,'win','cave episode can be completed');assert.ok(elements.get('result-label').textContent.includes('02'));
+g.reset();assert.equal(g.state.selectedEpisode,2,'retry stays in selected episode');
+elements.get('episode-menu').onclick();elements.get('episode-1').onclick();assert.equal(g.state.selectedEpisode,1);assert.equal(g.state.cavern.root.visible,false);assert.ok(g.state.outdoor.every(o=>o.visible),'returning to episode 1 restores scenery');
 console.log('PASS: rider swivelling and weapon emission, keyboard start/retry, four-direction attacks, radar, floating warships, turret fire, surface lock/hit/destruction, automatic rail, reticle-facing rotation, flying lasers, pause, segmented midboss, final boss, victory and defeat.');

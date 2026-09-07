@@ -15,9 +15,10 @@
 <p class="touch-intro">横画面推奨 ／ 左スティックで移動・右側をドラッグで照準と連射<br>スティック左右へ素早く2回で同じ側へ90度旋回 ／ LOCKを離して追尾レーザー</p>
 <header><a class="brand" href="./"><span class="brand-mark">◇</span> AZURE RELIC <span class="brand-sub">蒼海の翼</span></a><div class="header-right"><span class="live-dot"></span> FLIGHT SYSTEM ONLINE <button id="invert-y" type="button" aria-pressed="false" title="自機の上下移動を反転（W/S・移動スティック）">上下反転 OFF</button><button id="sound" aria-label="サウンド切り替え">SOUND ON</button><button id="pause" aria-label="一時停止">Ⅱ</button></div></header>
 <main id="title" class="panel">
-<div class="eyebrow"><span></span> EPISODE 01 / THE SUNKEN SANCTUARY</div>
+<div class="eyebrow" id="episode-label">EPISODE 01 / THE SUNKEN SANCTUARY</div>
 <h1>AZURE<br><em>RELIC</em><small>蒼海の翼</small></h1>
-<p class="intro">海に沈んだ文明。空に残された、最後の翼。<br>竜とともに、忘れられた聖域へ。</p>
+<p class="intro" id="episode-copy">海に沈んだ文明。空に残された、最後の翼。<br>竜とともに、忘れられた聖域へ。</p>
+<div class="episode-select" role="group" aria-label="エピソード選択"><button id="episode-1" aria-pressed="true">EPISODE 1<small>水没した聖域</small></button><button id="episode-2" aria-pressed="false">EPISODE 2<small>結晶の洞窟</small></button></div>
 <button id="start" class="primary">飛行を開始 <span>ENTER ↗</span></button>
 <div class="title-controls"><div><kbd>W A S D</kbd><span>移動 ／ A・Dを2回で90度旋回</span></div><div><kbd>左クリック</kbd><span>通常レーザー・長押しで連射</span></div><div><kbd>右クリック</kbd><span>長押しでロック → 離して追尾レーザー</span></div></div>
 <p class="view-help">Q 左へ90度　E 右へ90度　R 前方へ戻る</p>
@@ -40,7 +41,7 @@
 <div id="reticle"><i></i><span></span></div><div id="markers"></div><div id="announcement"></div>
 <div class="game-help">WASD 移動 ／ マウス 照準 ／ Q・E 90度旋回 ／ R 前方へ<br>左クリック 通常レーザー・長押し連射 ／ 右長押し → 離す 追尾レーザー ／ ESC 一時停止</div>
 </div>
-<section id="overlay" class="overlay" hidden><div class="eyebrow" id="result-label">FLIGHT PAUSED</div><h2 id="result-title">飛行を一時停止</h2><p id="result-copy">翼を休めて、再び空へ。</p><button id="resume" class="primary">飛行を再開 <span>ENTER ↗</span></button><button id="restart" class="secondary">最初からやり直す </button></section>
+<section id="overlay" class="overlay" hidden><div class="eyebrow" id="result-label">FLIGHT PAUSED</div><h2 id="result-title">飛行を一時停止</h2><p id="result-copy">翼を休めて、再び空へ。</p><button id="resume" class="primary">飛行を再開 <span>ENTER ↗</span></button><button id="restart" class="secondary">最初からやり直す </button><button id="episode-menu" class="secondary">エピソード選択へ戻る</button></section>
 <footer id="footer"><span>AN ORIGINAL RAIL SHOOTER</span><span>HEADPHONES RECOMMENDED <span class="tiny-diamond">◇</span> DESKTOP EXPERIENCE</span></footer>
 <script type="module" src="/src/main.js"></script>
 </body></html>
