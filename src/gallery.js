@@ -19,9 +19,14 @@ function resetView(){
 }
 function select(index){
  selected=(index+galleryModels.length)%galleryModels.length;
- if(model){const geometries=new Set();model.traverse(o=>{if(o.geometry)geometries.add(o.geometry);});geometries.forEach(g=>g.dispose());holder.remove(model);}
+ if(model){model.userData.disposed=true;const geometries=new Set();model.traverse(o=>{if(o.geometry)geometries.add(o.geometry);});geometries.forEach(g=>g.dispose());holder.remove(model);}
  holder.scale.setScalar(1);holder.updateMatrixWorld(true);
  const item=galleryModels[selected];model=item.create();holder.add(model);clock=0;
+ model.addEventListener('model-ready',()=>{
+  holder.scale.setScalar(1);model.position.set(0,0,0);holder.updateMatrixWorld(true);
+  const bounds=new THREE.Box3().setFromObject(model);bounds.getCenter(center);
+  holder.scale.setScalar(6/Math.max(bounds.getSize(new THREE.Vector3()).length()/2,.01));model.position.sub(center);resetView();
+ });
  const bounds=new THREE.Box3().setFromObject(model);bounds.getCenter(center);
  const radius=bounds.getSize(new THREE.Vector3()).length()/2;
  holder.scale.setScalar(6/Math.max(radius,.01));model.position.sub(center);holder.position.set(0,0,0);
