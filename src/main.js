@@ -459,8 +459,8 @@ function updateGameplay(dt){
  const previousSteerX=control.steerX,previousSteerY=control.steerY;
  stepSteering(control,keys,dt);
  const route=courseAt(elapsed),basis=updateView(camera,view,route,control,dt);
- const position=basis.center.clone().addScaledVector(basis.right,control.steerX*12);
- position.y=Math.max(3.35,route.y+control.steerY*4.2);player.x=position.x;player.y=position.y;player.z=position.z;
+ const position=basis.center.clone().addScaledVector(basis.right,control.steerX*14.4);
+ position.y=Math.max(3.35,route.y+control.steerY*(control.steerY>0?8.4:4.2));player.x=position.x;player.y=position.y;player.z=position.z;
  const previousPosition=dragon.position.clone();
  dragon.position.lerp(position,1-Math.exp(-dt*4));
  const flightAim=reticleWorldPoint(camera,control,innerWidth,innerHeight);
