@@ -19,7 +19,7 @@ for(const leg of rig.legs)assert.ok(leg.joint.children.length,'all limbs contain
 let meshes=0;model.traverse(o=>{if(o.isMesh){meshes++;assert.ok(o.geometry.attributes.position.array.every(Number.isFinite));}});
 assert.ok(meshes<60,`batched draw count: ${meshes}`);
 const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
-assert.ok(size.x>15&&size.x<20,'wings fit player scale');
+assert.ok(size.x>19&&size.x<23,'enlarged wings fit player scale');
 assert.ok(dragonMouth(model).z<0,'head faces forward');
 for(let i=0;i<90;i++)animateDragon(model,i/60,{motion:new THREE.Vector3(1,.2,0)});
 assert.ok(rig.wingMotion.effort>.4);assert.ok(rig.tail[0].rotation.y<0,'tail trails turning direction');

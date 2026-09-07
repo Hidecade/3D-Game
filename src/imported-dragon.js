@@ -5,11 +5,26 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 let assetPromise;
 const modelUrl=new URL('../assets/models/player-dragon.glb',import.meta.url).href;
 
+// Apply one continuous body deformation to skin, armor and joint anchors alike.
+function slenderPose(x,y,z,wing=false){
+ if(wing){
+  const side=Math.sign(x),anchor=side*.85;
+  return new THREE.Vector3(anchor*.64+(x-anchor)*1.2,y,.45+(z-.45)*1.2);
+ }
+ const waist=THREE.MathUtils.smoothstep(y,-1.1,.2);
+ const upperNeck=THREE.MathUtils.smoothstep(y,.45,1.5);
+ x*=THREE.MathUtils.lerp(THREE.MathUtils.lerp(.48,.67,waist),.82,upperNeck);
+ if(y<0)y*=.72;
+ const head=THREE.MathUtils.smoothstep(y,1.05,1.8),headScale=1-head*.26;
+ x*=headScale;y=1.5+(y-1.5)*headScale;z=-2.3+(z+2.3)*headScale;
+ return new THREE.Vector3(x,y,z);
+}
+
 // The supplied model has separate anatomy meshes, but no skeleton or clips.
 // Bake its standing pose into a flight pose, then articulate those parts.
 export function prepareImportedDragon(source){
  const root=new THREE.Group();root.name='textured-player-dragon';
- const part=(name,p)=>{const g=new THREE.Group();g.name=name;g.position.set(...p);root.add(g);return g;};
+ const part=(name,p)=>{const g=new THREE.Group();g.name=name;g.position.copy(slenderPose(...p));root.add(g);return g;};
  const body=part('body',[0,0,0]),neck=part('neck',[0,0,-.45]);
  const jaw=part('jaw',[0,1.65,-2.8]),tail=part('tail',[0,-.55,1.25]);
  const wings=[-1,1].map(side=>({side,shoulder:part('wing', [side*.85,0,.45]),outer:new THREE.Group()}));
@@ -37,7 +52,8 @@ export function prepareImportedDragon(source){
    const fy=wing?-(z+.3)*.8:(y-3)*.55;
    let fz=wing?-.3+(y-3)*.8:z+Math.max(0,y-3)*.6;
    if(group.name==='leg')fz-=Math.max(0,2.6-y)*.48;
-   positions.setXYZ(i,-x*1.5,fy*1.5,-fz*1.5);
+   const shaped=slenderPose(-x*1.5,fy*1.5,-fz*1.5,wing);
+   positions.setXYZ(i,shaped.x,shaped.y,shaped.z);
   }
   geo.computeVertexNormals();
   const pivot=group===wings[0].outer?wings[0].shoulder.position:group===wings[1].outer?wings[1].shoulder.position:group.position;
@@ -53,7 +69,7 @@ export function prepareImportedDragon(source){
  }
  // Keep the jaw attached when the neck follows the flight direction.
  root.updateMatrixWorld(true);neck.attach(jaw);
- const mouth=new THREE.Object3D();mouth.position.set(0,1.8,-4);root.add(mouth);neck.attach(mouth);
+ const mouth=new THREE.Object3D();mouth.position.copy(slenderPose(0,1.8,-4));root.add(mouth);neck.attach(mouth);
  root.userData.rig={wings,tail:[tail],legs,neck,jaw,mouth,scarf:null,ancient:false,referenceStyle:true};
  return root;
 }

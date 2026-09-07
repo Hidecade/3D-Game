@@ -9,7 +9,7 @@ import { createWarship } from './warships.js';
 function player(){const model=createDragon({referenceStyle:true});loadPlayerModel(model);return model;}
 export const galleryModels=[
  {name:'自機のドラゴン ＋ 騎手',description:'読み込んだテクスチャ付きドラゴンに、金髪の騎手が乗る。',create(){const model=player();model.add(createRider());return model;},animate:animateDragon},
- {name:'自機のドラゴン',description:'GLBモデルの鱗・角・翼膜を生かし、飛行姿勢と羽ばたきを付けた竜。',create:player,animate:animateDragon},
+ {name:'自機のドラゴン',description:'細い胴体と臀部、小さな顔、大きく広がる翼を持つ軽やかな竜。',create:player,animate:animateDragon},
  {name:'女性の騎手',description:'金髪のポニーテールと青い瞳を持つ、竜の背から銃で戦う騎手。',create:createRider},
  {name:'鷲型獣 ／ 茶金',description:'大きな羽毛の翼と鋭い目を持つ飛行獣。',create:()=>createSkyBeast({kind:'amber'}),animate:animateDragon},
  {name:'鷲型獣 ／ 青灰',description:'青灰色の羽毛を持つ鷲型獣の別個体。',create:()=>createSkyBeast({kind:'storm'}),animate:animateDragon},
