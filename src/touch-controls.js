@@ -67,7 +67,7 @@ export function installTouchControls({control,playing,turn,fire,lock,release,can
   });
   for(const event of ['pointercancel','lostpointercapture'])element.addEventListener(event,e=>endPointer(e.pointerId,true));
  }
- for(const [id,code] of [['touch-left','KeyQ'],['touch-right','KeyE'],['touch-front','KeyR']]){
+ for(const [id,code] of [['touch-front','KeyR']]){
   const button=document.getElementById(id);let lastTouch=-Infinity;
   // Secondary fingers do not reliably generate click on iOS. Act on touch down.
   button.addEventListener('pointerdown',e=>{

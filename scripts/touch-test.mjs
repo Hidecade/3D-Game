@@ -21,13 +21,13 @@ event('touch-aim','pointerup',2,620,180);assert.equal(control.shooting,false);as
 event('touch-stick','pointerup',1,100,30);assert.equal(control.touchX,undefined);
 event('touch-lock','pointerdown',4,780,330);event('touch-lock','pointercancel',4,780,330);assert.equal(control.locking,false);assert.equal(lasers,1,'cancellation does not fire locks');
 event('touch-aim','pointerdown',5,600,200);active=false;touch.reset();event('touch-aim','pointermove',5,700,100);assert.equal(control.shooting,false);
-active=true;event('touch-left','pointerdown',7,300,330);event('touch-front','pointerdown',8,350,330);event('touch-right','pointerdown',9,400,330);assert.deepEqual(turns,['KeyQ','KeyR','KeyE']);
+active=true;event('touch-front','pointerdown',8,350,330);assert.deepEqual(turns,['KeyR']);
 event('touch-aim','pointerdown',6,600,200,'mouse');assert.equal(control.shooting,false);
 // A second finger can turn without click synthesis or cancelling the stick.
 event('touch-stick','pointerdown',10,100,30);const heldX=control.touchX;
-event('touch-left','pointerdown',11,300,330);event('touch-front','pointerdown',12,350,330);event('touch-right','pointerdown',13,400,330);
-assert.deepEqual(turns.slice(-3),['KeyQ','KeyR','KeyE']);assert.equal(control.touchX,heldX);
-const turnCount=turns.length;event('touch-right','click',13,400,330);assert.equal(turns.length,turnCount,'synthetic click does not turn twice');
+event('touch-front','pointerdown',12,350,330);
+assert.equal(turns.at(-1),'KeyR');assert.equal(control.touchX,heldX);
+const turnCount=turns.length;event('touch-front','click',12,350,330);assert.equal(turns.length,turnCount,'synthetic click does not turn twice');
 event('touch-aim','pointerdown',14,600,200);event('touch-aim','lostpointercapture',14,600,200);
 assert.equal(control.touchX,heldX,'losing aim capture does not cancel movement');
 event('touch-lock','pointerdown',15,780,330);event('touch-lock','pointercancel',15,780,330);
