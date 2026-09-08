@@ -5,7 +5,8 @@ const V = (x,y,z) => new THREE.Vector3(x,y,z);
 const palettes = {
  azure: {skin:0x397b7c, belly:0xb5b793, ridge:0x21474e, wing:0x9f634a, horn:0xddd2b0, eye:0x8cffff},
  ivory: {skin:0xd4dedb, belly:0xe9e6d3, ridge:0x182c78, wing:0xb77866, horn:0xe4e2d0, eye:0x7cefff},
- verdant: {skin:0x6f8072, belly:0x9b9d55, ridge:0x3e5045, wing:0x76b2a0, horn:0x9eaa83, eye:0xd8ee54},
+ verdant: {skin:0x167dba, belly:0x83dbec, ridge:0x123778, wing:0x218acf, horn:0xf3ad48, eye:0x8cffff},
+ jade: {skin:0x328b44, belly:0x9fca7e, ridge:0x174e2b, wing:0x246d3b, horn:0xe5d5a2, eye:0xffc933},
  ember: {skin:0x794132, belly:0xc29365, ridge:0x3b2928, wing:0x823c2e, horn:0xc4ac81, eye:0xffbb42},
  moss: {skin:0x536c43, belly:0xb1ad75, ridge:0x293a32, wing:0x6e7043, horn:0xd3c49b, eye:0xffcd65},
  ancient: {skin:0x49403b, belly:0x382d29, ridge:0x241f1c, wing:0x332321, horn:0x54453b, eye:0xffd569},
@@ -90,6 +91,7 @@ function membrane(group,material,root,boundary){
 
 export function createDragon({kind='azure',rider=false,ancient=false,slender=false,wingSpan=1,wingDepth=1,referenceStyle=false}={}){
  if(referenceStyle)return createVerdantDragon();
+ if(ancient)return createShellSerpent();
  const root=new THREE.Group();root.name=`${kind}-dragon`;const m=getMaterials(kind);
  const torso=new THREE.Group();root.add(torso);
  if(ancient){root.name='volcanic-armored-dragon';torso.scale.set(1.2,1.15,1.05);}
@@ -219,9 +221,9 @@ export function createDragon({kind='azure',rider=false,ancient=false,slender=fal
  root.userData.rig={wings,tail,neck,jaw,scarf,mouth,ancient};return root;
 }
 
-// Reference-inspired grey-green scales, tall armored neck and turquoise membranes.
+// Compact sapphire flyer with swept wings and three warm-colored crown spikes.
 function createVerdantDragon(){
- const root=new THREE.Group();root.name='verdant-crested-dragon';const m=getMaterials('verdant');
+ const root=new THREE.Group();root.name='sapphire-three-horn-dragon';const m=getMaterials('verdant');
  const legs=[];
  const body=new THREE.Group();root.add(body);
  taper(body,m.ridge,[[0,.35,-1.3],[0,.05,-.55],[0,-.12,.35],[0,-.17,1.45]],[.42,.4,.27,.23],14,24);
@@ -256,13 +258,14 @@ function createVerdantDragon(){
   }
   taper(body,m.ridge,[[0,y-.035,z-.11],[0,y+.14-i*.009,z+.04],[0,y+.025,z+.25]],[.065,.045,.002],7,10);
  }
- for(let i=0;i<4;i++){
+ for(let i=0;i<3;i++){
   const z=.2+i*.34;
-  taper(body,m.horn,[[0,.26,z],[0,.78-i*.06,z+.22],[0,.96-i*.1,z+.44]],[.095,.055,.001],8,12);
-  membrane(body,m.wing,[0,.25,z],[[0,.3,z+.1],[0,.9-i*.1,z+.42],[0,.24,z+.57]]);
+  taper(body,m.ridge,[[0,.26,z],[0,.5-i*.06,z+.22],[0,.62-i*.1,z+.44]],[.095,.055,.001],8,12);
  }
+ for(const side of [-1,0,1])taper(body,m.horn,[[side*.47,.5,-1.08],[side*.67,1.03,-1.55],[side*.75,1.85-(side? .18:0),-2.02]],[.12,.075,.001],9,16);
  bake(body);
  const neck=new THREE.Group();neck.position.set(0,.45,-1.45);root.add(neck);
+ neck.scale.set(.82,.42,.76);
  taper(neck,m.skin,[[0,0,.15],[0,.65,-.32],[0,1.28,-.7],[0,1.62,-1.4]],[.4,.34,.28,.24],14,32);
  for(let i=0;i<9;i++){
   const u=i/8,y=.12+u*1.5,z=-.17-u*1.33;
@@ -271,7 +274,7 @@ function createVerdantDragon(){
    const scale=add(neck,new THREE.OctahedronGeometry(1),m.skin,V(side*(.29-u*.07),y,z+.06),V(.1,.21,.24));scale.rotation.x=-.4;
   }
   if(i%2===0){
-   taper(neck,m.horn,[[0,y+.18,z+.2],[0,y+.48,z+.5],[0,y+.64,z+.8]],[.09,.065,.001],8,12);
+   taper(neck,m.ridge,[[0,y+.18,z+.2],[0,y+.48,z+.5],[0,y+.64,z+.8]],[.09,.065,.001],8,12);
    membrane(neck,m.wing,[0,y+.05,z+.18],[[0,y+.17,z+.24],[0,y+.61,z+.78],[0,y+.04,z+.6]]);
   }
  }
@@ -284,8 +287,8 @@ function createVerdantDragon(){
   oval(head,m.eye,[s*.302,.06,-.2],[.045,.062,.095]);
   oval(head,m.pupil,[s*.34,.065,-.23],[.012,.047,.022]);
   taper(head,m.ridge,[[s*.24,.18,-.42],[s*.32,.17,-.17],[s*.32,.24,.08]],[.065,.07,.015],8,12);
-  taper(head,m.horn,[[s*.23,.2,.1],[s*.4,.56,.38],[s*.46,1.04,.68]],[.14,.085,.001],10,20);
-  taper(head,m.horn,[[s*.25,.02,.16],[s*.55,.23,.51],[s*.69,.55,.74]],[.11,.065,.001],9,15);
+  taper(head,m.ridge,[[s*.23,.2,.1],[s*.4,.36,.38],[s*.46,.54,.68]],[.14,.085,.001],10,20);
+  taper(head,m.ridge,[[s*.25,.02,.16],[s*.55,.13,.51],[s*.69,.25,.74]],[.11,.065,.001],9,15);
   membrane(head,m.wing,[s*.2,.13,.15],[[s*.3,.33,.28],[s*.45,.94,.64],[s*.48,.45,.48],[s*.67,.53,.72],[s*.45,.04,.43]]);
   oval(head,m.pupil,[s*.115,.055,-.86],[.034,.023,.041]);
   for(let i=0;i<5;i++){
@@ -300,22 +303,22 @@ function createVerdantDragon(){
   const segment=new THREE.Group();segment.position.set(0,i===0?-.16:0,i===0?1.35:.56);parent.add(segment);
   const radius=.25*Math.pow(1-i/12,1.05);
   taper(segment,i<3&&i%2===0?m.skin:m.ridge,[[0,0,-.04],[0,0,.3],[0,0,.61]],[radius,radius*.92,radius*.8],10,9);
-  if(i<8)taper(segment,m.horn,[[0,radius*.6,.1],[0,radius+.25-i*.02,.37],[0,radius*.6,.58]],[.07,.04,.001],8,10);
+  if(i<8)taper(segment,m.ridge,[[0,radius*.6,.1],[0,radius+.25-i*.02,.37],[0,radius*.6,.58]],[.07,.04,.001],8,10);
   if(i===10)taper(segment,m.ridge,[[0,0,.25],[0,0,.87],[0,.02,1.4]],[.055,.03,.001],8,14);
   bake(segment);tail.push(segment);parent=segment;
  }
  const wings=[];
  for(const s of [-1,1]){
   const shoulder=new THREE.Group();shoulder.position.set(s*.43,.53,-1.05);shoulder.scale.z=1.3;root.add(shoulder);
-  const wrist=[s*2.7,1.05,-.75];
+  const wrist=[s*2, .48,-.75];
   taper(shoulder,m.ridge,[[0,0,0],[s*1.1,.51,-.52],wrist],[.15,.11,.075],10,18);
   membrane(shoulder,m.wing,[0,0,.7],[[0,0,0],[s*1.1,.51,-.52],wrist,[s*2.17,.36,.6],[s*1.46,-.06,.92],[s*.75,-.14,.35]]);
   taper(shoulder,m.skin,[[0,.03,0],[s*.92,.44,-.4],[s*1.62,.69,-.56]],[.09,.075,.02],8,14);
   const outer=new THREE.Group();outer.position.set(...wrist);shoulder.add(outer);
-  const tips=[[s*7.65,-1.38,1.06],[s*5.15,-.83,2.18],[s*2.92,-.38,2.16],[s*.76,-.37,1.47]];
-  const edge=[[0,0,0],[s*1.27,.03,-.18],[s*3.72,-.34,.12],[s*5.72,-.86,.48],tips[0],[s*5.5,-.66,1.34],tips[1],[s*3.9,-.28,1.1],tips[2],[s*1.67,-.18,.81],tips[3],[0,-.41,.79]];
+  const tips=[[s*4.8,-.48,1.06],[s*3.5,-.33,2.18],[s*2,-.28,2.16],[s*.76,-.27,1.47]];
+  const edge=[[0,0,0],[s*1.1,.03,-.18],[s*2.55,-.14,.12],[s*3.8,-.3,.48],tips[0],[s*3.8,-.26,1.34],tips[1],[s*2.7,-.18,1.1],tips[2],[s*1.3,-.18,.81],tips[3],[0,-.31,.79]];
   membrane(outer,m.wing,[0,0,0],edge);
-  taper(outer,m.ridge,[[0,0,0],[s*1.27,.03,-.18],[s*3.72,-.34,.12],[s*5.72,-.86,.48],tips[0]],[.08,.074,.055,.03,.001],9,30);
+  taper(outer,m.ridge,[[0,0,0],[s*1.1,.03,-.18],[s*2.55,-.14,.12],[s*3.8,-.3,.48],tips[0]],[.08,.074,.055,.03,.001],9,30);
   // Scaled finger bones separate the broad turquoise membranes.
   for(let i=1;i<tips.length;i++)taper(outer,m.ridge,[[0,0,0],[tips[i][0]*.48,-.1,tips[i][2]*.36],tips[i]],[.055,.037,.008],7,16);
   for(let i=4;i<edge.length-1;i++)taper(outer,m.ridge,[edge[i],edge[i+1]],[.019,.014],6,5);
@@ -324,6 +327,70 @@ function createVerdantDragon(){
  }
  const mouth=new THREE.Object3D();mouth.position.set(0,-.12,-1.04);head.add(mouth);
  root.userData.rig={wings,tail,legs,neck,jaw,scarf:null,mouth,ancient:false,referenceStyle:true};return root;
+}
+
+// A broad leaf-shaped carapace, pale scute borders and a long S-curved snake neck.
+function createShellSerpent(){
+ const root=new THREE.Group();root.name='jade-carapace-serpent';const m=getMaterials('jade');
+ const shell=new THREE.Group();root.add(shell);
+ oval(shell,m.ridge,[0,0,.65],[3.55,1.05,4.35]);
+ oval(shell,m.skin,[0,.48,.65],[3.35,1.35,4.18]);
+ oval(shell,m.belly,[0,-.52,.5],[2.9,.55,3.8]);
+ for(let row=0;row<7;row++){
+  const z=-2.6+row*1.04,t=(z-.65)/4.2,width=2.7*Math.sqrt(Math.max(.05,1-t*t));
+  for(const side of [-1,0,1]){
+   const x=side*width*.64,y=.67+1.12*Math.sqrt(Math.max(.05,1-t*t-(x/3.55)**2));
+   const plate=add(shell,new THREE.OctahedronGeometry(1),m.horn,V(x,y,z),V(side? .9:1.05,.18,.92));
+   plate.rotation.z=-side*.24;plate.rotation.x=t*.18;
+   const inset=add(shell,new THREE.OctahedronGeometry(1),row%2?m.skin:m.ridge,V(x,y+.1,z),V(side?.72:.85,.16,.74));
+   inset.rotation.copy(plate.rotation);
+  }
+ }
+ for(const side of [-1,1])for(let i=0;i<9;i++){
+  const a=.3+i*.32,x=side*Math.sin(a)*3.32,z=.65-Math.cos(a)*4.1;
+  taper(shell,m.skin,[[x,.05,z],[x*1.08,.04,z+.12],[x*1.1,-.04,z+.4]],[.24,.17,.002],8,9);
+ }
+ bake(shell);
+ const neck=new THREE.Group();neck.position.set(0,-.05,-2.9);root.add(neck);
+ const points=[[0,0,.2],[.75,-.05,-1.35],[.3,.1,-2.8],[-1.3,.05,-4.1],[-1.55,-.12,-5.35],[-.5,-.18,-6.35]];
+ taper(neck,m.skin,points,[.91,.83,.72,.62,.48,.43],18,56);
+ const curve=new THREE.CatmullRomCurve3(points.map(p=>V(...p)));
+ for(let i=0;i<21;i++){
+  const u=i/20,p=curve.getPoint(u),r=.88-u*.46;
+  const band=oval(neck,m.belly,[p.x,p.y-r*.6,p.z],[r*.79,.15,.24]);
+  band.rotation.y=Math.atan2(curve.getTangent(u).x,curve.getTangent(u).z);
+  for(const side of [-1,1]){
+   const scute=add(neck,new THREE.OctahedronGeometry(1),i%2?m.skin:m.ridge,V(p.x+side*r*.62,p.y+r*.45,p.z),V(r*.4,.12,.3));scute.rotation.y=band.rotation.y;
+  }
+ }
+ const head=new THREE.Group();head.position.set(-.5,-.18,-6.35);head.rotation.y=-.35;neck.add(head);
+ oval(head,m.skin,[0,0,-.22],[.52,.38,.82]);
+ taper(head,m.ridge,[[0,.15,-.15],[0,.08,-.8],[0,-.03,-1.38]],[.4,.31,.045],12,22);
+ const jaw=new THREE.Group();jaw.position.set(0,-.23,-.1);head.add(jaw);
+ oval(jaw,m.belly,[0,-.06,-.48],[.35,.13,.67]);oval(head,m.mouth,[0,-.21,-.55],[.34,.05,.6]);
+ for(const side of [-1,1]){
+  const eye=add(head,new THREE.OctahedronGeometry(1),m.eye,V(side*.445,.09,-.5),V(.07,.055,.19));eye.rotation.x=-.2;
+  oval(head,m.pupil,[side*.505,.09,-.52],[.015,.042,.026]);
+  taper(head,m.ridge,[[side*.29,.14,-.85],[side*.49,.2,-.49],[side*.44,.27,-.2]],[.09,.1,.03],8,12);
+  taper(head,m.eye,[[side*.42,-.02,-.05],[side*.7,.02,-.04],[side*.87,.18,-.17]],[.095,.055,.001],8,12);
+  for(let i=0;i<4;i++)taper(head,m.horn,[[side*(.3-i*.035),-.18,-.4-i*.2],[side*(.29-i*.035),-.34,-.42-i*.2]],[.045,.001],6,6);
+ }
+ bake(jaw);bake(head);bake(neck);
+ const mouth=new THREE.Object3D();mouth.position.set(0,-.2,-1.35);head.add(mouth);
+ const tail=[];let parent=root;
+ for(let i=0;i<9;i++){
+  const segment=new THREE.Group();segment.position.set(0,i?0:-.1,i?.6:4.25);parent.add(segment);
+  const r=.58*(1-i/10);taper(segment,m.skin,[[0,0,-.1],[0,0,.35],[0,0,.7]],[r,r*.8,r*.6],10,9);bake(segment);tail.push(segment);parent=segment;
+ }
+ const wings=[];
+ for(const side of [-1,1]){
+  const shoulder=new THREE.Group();shoulder.position.set(side*2.8,-.45,.8);root.add(shoulder);
+  const outer=new THREE.Group();shoulder.add(outer);
+  membrane(outer,m.wing,[0,0,-1],[[0,0,-1],[side*1.4,-.25,-.6],[side*2.25,-.4,1.55],[side*.75,-.3,1.05],[0,0,1.65]]);
+  taper(outer,m.skin,[[0,0,-1],[side*1.4,-.25,-.6],[side*2.25,-.4,1.55]],[.24,.14,.002],10,18);
+  bake(outer);wings.push({shoulder,outer,side});
+ }
+ root.userData.rig={wings,tail,neck,jaw,mouth,scarf:null,ancient:true,shellSerpent:true};return root;
 }
 
 export function animateDragon(root,time,{bank=0,breathing=false,aimTarget=null,motion=null,dt=1/60}={}){
@@ -382,6 +449,7 @@ export function animateDragon(root,time,{bank=0,breathing=false,aimTarget=null,m
   rig.neck.rotation.x=THREE.MathUtils.damp(rig.neck.rotation.x,pitch,18,dt);
   rig.neck.rotation.y=THREE.MathUtils.damp(rig.neck.rotation.y,yaw,18,dt);
  }else{rig.neck.rotation.x=Math.sin(phase-.4)*.026;rig.neck.rotation.y=Math.sin(time*.7)*.035;}
+ if(rig.shellSerpent&&!aimTarget){rig.neck.rotation.y=Math.sin(time*.65)*.17;rig.neck.rotation.z=Math.sin(time*.48)*.045;}
  rig.jaw.rotation.x=rig.ancient?(breathing?-.42:-.23)+Math.sin(time*1.7)*.025:rig.referenceStyle?-.12+Math.sin(time*1.7)*.025:breathing?.28:.035+Math.sin(time*1.7)*.025;
  if(rig.scarf)rig.scarf.rotation.y=Math.sin(time*7)*.17;
 }

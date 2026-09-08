@@ -129,9 +129,10 @@ function screenPos(pos){const p=pos.clone().project(camera);return {x:(p.x*.5+.5
 function disposeGroup(g){g.traverse(o=>{if(o.geometry)o.geometry.dispose();});g.removeFromParent();}
 function createEnemy(x,y,z,isBoss=false,approach='front',insect=false){
  const g=new THREE.Group();g.position.set(x,y,z);scene.add(g);
+ if(isBoss)g.rotation.x=.18;
  const creature=isBoss?createDragon({kind:'ancient',ancient:true}):insect?createSkyInsect():createSkyBeast({kind:rand()>.5?'amber':'storm'});
- creature.rotation.y=approach==='front'?Math.PI:0;creature.scale.setScalar(isBoss?2.65:.73);g.add(creature);
- const e={mesh:g,creature,hp:isBoss?220:3,maxHp:isBoss?220:3,boss:isBoss,insect:!isBoss&&insect,approach,age:0,baseX:x,baseY:y,baseZ:z,sideOffset:x-courseAt(elapsed).x,fire:2+rand()*2,phase:rand()*6,dead:false,marker:null};enemies.push(e);return e;
+ creature.rotation.y=approach==='front'?Math.PI:0;creature.scale.setScalar(isBoss?4:.73);g.add(creature);
+ const e={mesh:g,creature,hp:isBoss?220:3,maxHp:isBoss?220:3,hitRadius:isBoss?12:undefined,boss:isBoss,insect:!isBoss&&insect,approach,age:0,baseX:x,baseY:y,baseZ:z,sideOffset:x-courseAt(elapsed).x,fire:2+rand()*2,phase:rand()*6,dead:false,marker:null};enemies.push(e);return e;
 }
 function spawnAmbush(){
  const side=['rear','left','right'][ambushWave++%3],route=courseAt(elapsed);
