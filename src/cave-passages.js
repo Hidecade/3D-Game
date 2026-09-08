@@ -1,13 +1,19 @@
 import * as THREE from 'three';
+import { createAncientPassage } from './ancient-passage.js';
 
 export function createCavePassages(scene){
  const passages=[];let next=0;
  const schedule=[10,42];
  function reset(){
-  for(const p of passages){p.root.traverse(o=>{o.geometry?.dispose();});p.material.dispose();p.root.removeFromParent();}
+  for(const p of passages)dispose(p);
   passages.length=0;next=0;
  }
- function spawn(x){
+ function dispose(p){if(p.dispose)p.dispose();else{p.root.traverse(o=>{o.geometry?.dispose();});p.material.dispose();p.root.removeFromParent();}}
+ function spawn(x,ancient=false){
+  if(ancient){
+   const p=createAncientPassage();p.root.position.set(x,0,-100);scene.add(p.root);
+   passages.push({...p,ancient:true,spikes:[],wallHit:false});return;
+  }
   const root=new THREE.Group();root.name='narrow-cave-passage';root.position.set(x,0,-100);scene.add(root);
   const material=new THREE.MeshStandardMaterial({color:0x59646b,roughness:.95,side:THREE.DoubleSide,flatShading:true});
   const vertices=[],indices=[],steps=24,sides=24;
@@ -35,7 +41,7 @@ export function createCavePassages(scene){
   passages.push({root,material,spikes,wallHit:false});
  }
  function update(dt,{stageTime,routeX,player,enabled=true,onWarning=()=>{},onHit=()=>{}}){
-  if(enabled&&next<schedule.length&&stageTime>=schedule[next]){next++;spawn(routeX);onWarning();}
+  if(enabled&&next<schedule.length&&stageTime>=schedule[next]){const ancient=next===1;next++;spawn(routeX,ancient);onWarning(ancient);}
   for(let i=passages.length-1;i>=0;i--){
    const p=passages[i];p.root.position.z+=23*dt;
    const local=player.clone().sub(p.root.position);
@@ -47,10 +53,10 @@ export function createCavePassages(scene){
    if(local.z<0&&local.z>-360){
     const blend=THREE.MathUtils.smoothstep(Math.min(-local.z,360+local.z),0,60);
     const rx=THREE.MathUtils.lerp(108,25,blend)-.7,ry=THREE.MathUtils.lerp(58,20,blend)-.7,cy=THREE.MathUtils.lerp(40,16,blend);
-    const touching=(local.x/rx)**2+((local.y-cy)/ry)**2>1;
+    const touching=p.ancient?(Math.abs(local.x)>22.3||local.y<2.2||local.y>51||Math.abs(local.x)>18.3&&local.y<5.5):(local.x/rx)**2+((local.y-cy)/ry)**2>1;
     if(touching&&!p.wallHit){p.wallHit=true;onHit();}else if(!touching)p.wallHit=false;
    }
-   if(p.root.position.z>470){p.root.traverse(o=>{o.geometry?.dispose();});p.material.dispose();p.root.removeFromParent();passages.splice(i,1);}
+   if(p.root.position.z>470){dispose(p);passages.splice(i,1);}
   }
  }
  return {update,reset,passages};

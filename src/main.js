@@ -491,7 +491,7 @@ function updateGameplay(dt){
  $('reticle').style.left=`${control.x}px`;$('reticle').style.top=`${control.y}px`;$('reticle').classList.toggle('locking',control.locking);
  if(stageTime>=32&&!midBossSpawned)spawnMidBoss();
  updateMidBoss(dt);
- if(selectedEpisode===2)cavePassages.update(dt,{stageTime,routeX:route.x,player:dragon.position,enabled:!midBoss||midBoss.dead,onWarning:()=>announce('狭い洞窟へ進入 ／ 天井と左右の岩に注意',4),onHit:hurt});
+ if(selectedEpisode===2)cavePassages.update(dt,{stageTime,routeX:route.x,player:dragon.position,enabled:!midBoss||midBoss.dead,onWarning:ancient=>announce(ancient?'古代遺跡の回廊へ ／ 石のアーチをくぐり抜けろ':'狭い洞窟へ進入 ／ 天井と左右の岩に注意',4),onHit:hurt});
  thermalVents.update(dt,{stageTime,routeX:route.x,player:dragon.position,time:t,travel,enabled:!midBoss||midBoss.dead,onWarning:()=>announce('水面に熱源反応 ／ 噴き上がる熱風を回避',3),onErupt:()=>se.play('bossVolley'),onHit:hurt});
  if(selectedEpisode===1&&(!midBoss||midBoss.dead)&&stageTime<66){
   shipTimer-=dt;if(shipTimer<=0){const side=shipWave++%2?1:-1;spawnWarship(route.x+side*22,-140);if(shipWave===1){spawnWarship(route.x+25,-190);announce('旧時代の小型戦艦 / 水面の砲台を撃破',4);}shipTimer=19;}

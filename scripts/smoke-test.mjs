@@ -329,7 +329,18 @@ elements.get('episode-menu').onclick();elements.get('episode-1').onclick();asser
   passages.update(0,params);assert.equal(collisions,before+1,'contact with each spike damages');
   passages.update(0,params);assert.equal(collisions,before+1,'one spike does not repeatedly hit');
  }
- passages.reset();assert.equal(scene.children.length,0,'retry removes narrow passages');
+ player.set(0,8,3);passage.root.position.z=471;passages.update(0,params);
+ assert.equal(passages.passages.length,0,'passed cave is released');
+ passages.update(0,{...params,stageTime:42});
+ const hall=passages.passages[0];assert.equal(hall.root.name,'ancient-arched-passage');
+ assert.ok(hall.root.children.length<=5,'stone corridor is batched for mobile');
+ player.copy(hall.root.position).add(new Three.Vector3(0,8,-120));
+ const before=collisions;passages.update(0,params);assert.equal(collisions,before,'central flight lane is clear');
+ player.x=hall.root.position.x+24;passages.update(0,params);assert.equal(collisions,before+1,'stone columns damage on contact');
+ passages.update(0,params);assert.equal(collisions,before+1,'wall contact does not hit every frame');
+ player.x=hall.root.position.x;passages.update(0,params);
+ player.y=1.5;passages.update(0,params);assert.equal(collisions,before+2,'stone floor has collision');
+ passages.reset();assert.equal(scene.children.length,0,'retry removes cave and stone passages');
  passages.update(0,{...params,enabled:false});assert.equal(passages.passages.length,0,'boss fight blocks passage spawning');
 }
 console.log('PASS: rider swivelling and weapon emission, keyboard start/retry, four-direction attacks, radar, floating warships, turret fire, surface lock/hit/destruction, automatic rail, reticle-facing rotation, flying lasers, pause, segmented midboss, final boss, victory and defeat.');
